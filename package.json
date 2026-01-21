@@ -1,5 +1,5 @@
 {
-  "name": "your-project-name",
+  "name": "memberstime-prod",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,3 +17,4 @@
   },
   "devDependencies": {
     "autopref
+
