@@ -4,7 +4,13 @@ import { signUp } from "./actions";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function SignUpPage() {
+export default function SignUpPage({
+  searchParams,
+}: {
+  searchParams?: { error?: string };
+}) {
+  const error = searchParams?.error;
+
   return (
     <main>
       <SiteHeader />
@@ -36,9 +42,14 @@ export default function SignUpPage() {
             />
           </div>
 
-          <button className="w-full rounded-xl bg-[#c58a3a] px-4 py-3 font-semibold text-[#0b2a1f] hover:brightness-110">
+          <button
+            type="submit"
+            className="w-full rounded-xl bg-[#c58a3a] px-4 py-3 font-semibold text-[#0b2a1f] hover:brightness-110"
+          >
             Create account
           </button>
+
+          {error && <p className="text-sm text-red-300">{error}</p>}
         </form>
       </div>
     </main>
