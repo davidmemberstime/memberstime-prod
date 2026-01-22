@@ -20,6 +20,7 @@ export default function SignUpPage({
         <form
           action={signUp}
           className="mt-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6"
+          autoComplete="off"
         >
           <div>
             <label className="text-sm text-white/80">Email</label>
@@ -28,6 +29,7 @@ export default function SignUpPage({
               className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b2a1f] px-4 py-3"
               type="email"
               required
+              autoComplete="email"
             />
           </div>
 
@@ -39,6 +41,7 @@ export default function SignUpPage({
               type="password"
               required
               minLength={6}
+              autoComplete="new-password"
             />
           </div>
 
