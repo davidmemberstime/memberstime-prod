@@ -1,12 +1,11 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { useEffect, useState } from "react";
 import SiteHeader from "@/components/SiteHeader";
 import { supabase } from "@/lib/supabase/client";
-import { signOut } from "@/app/auth/sign-out/actions";
-
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 type ClubRow = {
   id: string;
@@ -16,7 +15,7 @@ type ClubRow = {
   tier: "Curated" | "Prestigious";
   guests_max: 1 | 2;
   clubhouse_contribution_gbp: number;
-  hosts_count: number;
+  hosts_count: number | null;
 };
 
 export default function BrowsePage() {
@@ -29,8 +28,9 @@ export default function BrowsePage() {
       setLoading(true);
 
       const { data, error } = await supabase
-        .from("club_directory")
+        .from("clubs")
         .select("*")
+        .order("tier", { ascending: false }) // Prestigious first
         .order("hosts_count", { ascending: false });
 
       if (error) setErr(error.message);
@@ -47,22 +47,17 @@ export default function BrowsePage() {
       <SiteHeader />
 
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <form action={signOut} className="mb-6">
-          <button
-            type="submit"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10"
-          >
-            Sign out
-          </button>
-        </form>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Browse clubs
+        </h1>
 
-        <h1 className="text-3xl font-semibold tracking-tight">Browse clubs</h1>
         <p className="mt-2 max-w-2xl text-white/70">
-          A curated UK list. See how many verified member hosts are available at each club.
+          Prestigious clubs are shown first, followed by curated selections
+          across England, Scotland, Wales and Northern Ireland.
         </p>
 
         {loading && <p className="mt-8 text-white/70">Loading clubs…</p>}
-        {err && <p className="mt-8 text-red-300">{err}</p>}
+        {err && <p className="mt-8 text-red-400">{err}</p>}
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           {clubs.map((c) => (
@@ -77,6 +72,7 @@ export default function BrowsePage() {
                     {c.region}, {c.country}
                   </div>
                 </div>
+
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
                   {c.tier}
                 </span>
@@ -84,9 +80,14 @@ export default function BrowsePage() {
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <div className="text-xs text-white/70">Hosts on platform</div>
-                  <div className="text-lg font-semibold">{c.hosts_count}</div>
+                  <div className="text-xs text-white/70">
+                    Hosts on platform
+                  </div>
+                  <div className="text-lg font-semibold">
+                    {c.hosts_count ?? 0}
+                  </div>
                 </div>
+
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                   <div className="text-xs text-white/70">
                     Clubhouse contribution
