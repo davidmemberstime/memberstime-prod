@@ -45,19 +45,15 @@ export default function BrowsePage() {
   return (
     <main>
       <SiteHeader />
-
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Browse clubs
-        </h1>
-
+        <h1 className="text-3xl font-semibold tracking-tight">Browse clubs</h1>
         <p className="mt-2 max-w-2xl text-white/70">
           Prestigious clubs are shown first, followed by curated selections
           across England, Scotland, Wales and Northern Ireland.
         </p>
 
         {loading && <p className="mt-8 text-white/70">Loading clubs…</p>}
-        {err && <p className="mt-8 text-red-400">{err}</p>}
+        {err && <p className="mt-8 text-red-300">{err}</p>}
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           {clubs.map((c) => (
@@ -72,7 +68,6 @@ export default function BrowsePage() {
                     {c.region}, {c.country}
                   </div>
                 </div>
-
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
                   {c.tier}
                 </span>
@@ -80,14 +75,11 @@ export default function BrowsePage() {
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <div className="text-xs text-white/70">
-                    Hosts on platform
-                  </div>
+                  <div className="text-xs text-white/70">Hosts on platform</div>
                   <div className="text-lg font-semibold">
                     {c.hosts_count ?? 0}
                   </div>
                 </div>
-
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                   <div className="text-xs text-white/70">
                     Clubhouse contribution
@@ -98,7 +90,14 @@ export default function BrowsePage() {
                 </div>
               </div>
 
-              <div className="mt-5">
+              <div className="mt-5 flex flex-wrap gap-3">
+                <a
+                  href={`/clubs/${encodeURIComponent(c.id)}`}
+                  className="inline-flex rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+                >
+                  View club
+                </a>
+
                 <a
                   href={`/search?clubId=${encodeURIComponent(
                     c.id
