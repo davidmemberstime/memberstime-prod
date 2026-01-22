@@ -1,10 +1,16 @@
-import SiteHeader from "@/components/SiteHeader";
+iimport SiteHeader from "@/components/SiteHeader";
 import { signIn } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function SignInPage() {
+export default function SignInPage({
+  searchParams,
+}: {
+  searchParams?: { error?: string };
+}) {
+  const error = searchParams?.error;
+
   return (
     <main>
       <SiteHeader />
@@ -41,6 +47,8 @@ export default function SignInPage() {
           >
             Sign in
           </button>
+
+          {error && <p className="text-sm text-red-300">{error}</p>}
         </form>
       </div>
     </main>
