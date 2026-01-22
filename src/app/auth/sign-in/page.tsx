@@ -14,3 +14,35 @@ export default function SignInPage() {
         <form
           action={signIn}
           className="mt-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6"
+        >
+          <div>
+            <label className="text-sm text-white/80">Email</label>
+            <input
+              name="email"
+              className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b2a1f] px-4 py-3"
+              type="email"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-white/80">Password</label>
+            <input
+              name="password"
+              className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b2a1f] px-4 py-3"
+              type="password"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full rounded-xl bg-[#c58a3a] px-4 py-3 font-semibold text-[#0b2a1f] hover:brightness-110"
+          >
+            Sign in
+          </button>
+        </form>
+      </div>
+    </main>
+  );
+}
