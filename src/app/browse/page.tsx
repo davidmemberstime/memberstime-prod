@@ -17,7 +17,6 @@ type ClubRow = {
   tier: Tier;
   guests_max: 1 | 2;
   clubhouse_contribution_gbp: number;
-  hosts_count: number | null;
 };
 
 type Grouped = Record<
@@ -42,10 +41,9 @@ export default function BrowsePage() {
 
       const { data, error } = await supabase
         .from("clubs")
-        .select("id,name,region,country,tier,guests_max,clubhouse_contribution_gbp,hosts_count")
+        .select("id,name,region,country,tier,guests_max,clubhouse_contribution_gbp")
         .order("country", { ascending: true })
         .order("tier", { ascending: false }) // Prestigious first
-        .order("hosts_count", { ascending: false })
         .order("name", { ascending: true });
 
       if (!alive) return;
@@ -162,8 +160,8 @@ function ClubCard({ c }: { c: ClubRow }) {
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-          <div className="text-xs text-white/70">Hosts on platform</div>
-          <div className="text-lg font-semibold">{c.hosts_count ?? 0}</div>
+          <div className="text-xs text-white/70">Guests allowed</div>
+          <div className="text-lg font-semibold">{c.guests_max}</div>
         </div>
         <div className="rounded-xl border border-white/10 bg-white/5 p-3">
           <div className="text-xs text-white/70">Clubhouse contribution</div>
