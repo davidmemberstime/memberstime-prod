@@ -12,7 +12,7 @@ type Tier = "Curated" | "Prestigious";
 type ClubRow = {
   id: string;
   name: string;
-  region: string;
+  town: string | null;
   country: string;
   tier: Tier;
   guests_max: 1 | 2;
@@ -27,18 +27,17 @@ type Grouped = Record<
   }
 >;
 
-function formatLocation(regionRaw: string, countryRaw: string) {
-  const region = (regionRaw || "").trim();
+function formatLocation(townRaw: string | null, countryRaw: string) {
+  const town = (townRaw || "").trim();
   const country = (countryRaw || "").trim();
 
-  if (!region && !country) return "";
-  if (!region) return country;
-  if (!country) return region;
+  if (!town && !country) return "";
+  if (!town) return country;
+  if (!country) return town;
 
-  // Avoid "England, England"
-  if (region.toLowerCase() === country.toLowerCase()) return country;
+  if (town.toLowerCase() === country.toLowerCase()) return country;
 
-  return `${region}, ${country}`;
+  return `${town}, ${country}`;
 }
 
 export default function BrowsePage() {
@@ -55,9 +54,9 @@ export default function BrowsePage() {
 
       const { data, error } = await supabase
         .from("clubs")
-        .select("id,name,region,country,tier,guests_max,clubhouse_contribution_gbp")
+        .select("id,name,town,country,tier,guests_max,clubhouse_contribution_gbp")
         .order("country", { ascending: true })
-        .order("tier", { ascending: false }) // Prestigious first
+        .order("tier", { ascending: false })
         .order("name", { ascending: true });
 
       if (!alive) return;
@@ -129,7 +128,9 @@ export default function BrowsePage() {
 
                 {prestigious.length > 0 && (
                   <>
-                    <div className="mb-3 text-sm font-semibold text-white/80">Prestigious</div>
+                    <div className="mb-3 text-sm font-semibold text-white/80">
+                      Prestigious
+                    </div>
                     <div className="grid gap-4 md:grid-cols-2">
                       {prestigious.map((c) => (
                         <ClubCard key={c.id} c={c} />
@@ -140,7 +141,9 @@ export default function BrowsePage() {
 
                 {curated.length > 0 && (
                   <>
-                    <div className="mt-8 mb-3 text-sm font-semibold text-white/80">Curated</div>
+                    <div className="mt-8 mb-3 text-sm font-semibold text-white/80">
+                      Curated
+                    </div>
                     <div className="grid gap-4 md:grid-cols-2">
                       {curated.map((c) => (
                         <ClubCard key={c.id} c={c} />
@@ -158,16 +161,14 @@ export default function BrowsePage() {
 }
 
 function ClubCard({ c }: { c: ClubRow }) {
-  const location = formatLocation(c.region, c.country);
+  const location = formatLocation(c.town, c.country);
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-lg font-semibold">{c.name}</div>
-          {location && (
-            <div className="mt-1 text-sm text-white/70">{location}</div>
-          )}
+          {location && <div className="mt-1 text-sm text-white/70">{location}</div>}
         </div>
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
           {c.tier}
