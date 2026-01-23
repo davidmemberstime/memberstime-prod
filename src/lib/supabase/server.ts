@@ -31,3 +31,8 @@ export function createSupabaseServerClient() {
     }
   );
 }
+
+/**
+ * Alias expected by pages importing `createClient`
+ */
+export const createClient = createSupabaseServerClient;
