@@ -27,6 +27,20 @@ type Grouped = Record<
   }
 >;
 
+function formatLocation(regionRaw: string, countryRaw: string) {
+  const region = (regionRaw || "").trim();
+  const country = (countryRaw || "").trim();
+
+  if (!region && !country) return "";
+  if (!region) return country;
+  if (!country) return region;
+
+  // Avoid "England, England"
+  if (region.toLowerCase() === country.toLowerCase()) return country;
+
+  return `${region}, ${country}`;
+}
+
 export default function BrowsePage() {
   const [clubs, setClubs] = useState<ClubRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,14 +158,16 @@ export default function BrowsePage() {
 }
 
 function ClubCard({ c }: { c: ClubRow }) {
+  const location = formatLocation(c.region, c.country);
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-lg font-semibold">{c.name}</div>
-          <div className="mt-1 text-sm text-white/70">
-            {c.region}, {c.country}
-          </div>
+          {location && (
+            <div className="mt-1 text-sm text-white/70">{location}</div>
+          )}
         </div>
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
           {c.tier}
@@ -180,7 +196,9 @@ function ClubCard({ c }: { c: ClubRow }) {
         </a>
 
         <a
-          href={`/search?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`}
+          href={`/search?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(
+            c.name
+          )}`}
           className="inline-flex rounded-xl bg-[#c58a3a] px-4 py-2 text-sm font-semibold text-[#0b2a1f] hover:brightness-110"
         >
           View hosts
