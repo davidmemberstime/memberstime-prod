@@ -1,4 +1,4 @@
-import"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -52,7 +52,7 @@ export default function SiteHeader() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Live search
+  // Live search (debounced)
   useEffect(() => {
     const q = query.trim();
     if (!q) {
@@ -62,7 +62,7 @@ export default function SiteHeader() {
     }
 
     setLoading(true);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
 
     debounceRef.current = window.setTimeout(async () => {
       const { data } = await supabase
@@ -75,12 +75,16 @@ export default function SiteHeader() {
       setOpen(true);
       setLoading(false);
     }, 180);
+
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
   }, [query]);
 
   function goToClub(id: string) {
     setOpen(false);
     setQuery("");
-    router.push(`/clubs/${id}`);
+    router.push(`/clubs/${encodeURIComponent(id)}`);
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -101,7 +105,6 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0f2b22]/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
-
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
           <div className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5">
@@ -116,7 +119,7 @@ export default function SiteHeader() {
         </Link>
 
         {/* Navigation */}
-        <nav className="hidden md:flex gap-1">
+        <nav className="hidden gap-1 md:flex">
           {nav.map((n) => {
             const active = pathname === n.href;
             return (
@@ -148,11 +151,13 @@ export default function SiteHeader() {
               placeholder="Search clubs…"
               className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
             />
-            {loading && <span className="text-xs text-white/60">Searching…</span>}
+            {loading && (
+              <span className="text-xs text-white/60">Searching…</span>
+            )}
           </div>
 
           {open && query && (
-            <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-white/10 bg-[#0b221b] shadow-xl overflow-hidden">
+            <div className="absolute left-0 right-0 mt-2 overflow-hidden rounded-2xl border border-white/10 bg-[#0b221b] shadow-xl">
               {results.length === 0 ? (
                 <div className="px-4 py-3 text-sm text-white/60">
                   No clubs found
@@ -165,9 +170,7 @@ export default function SiteHeader() {
                     onMouseEnter={() => setActiveIndex(i)}
                     className={cx(
                       "flex w-full justify-between px-4 py-3 text-left text-sm transition",
-                      i === activeIndex
-                        ? "bg-white/10"
-                        : "hover:bg-white/5"
+                      i === activeIndex ? "bg-white/10" : "hover:bg-white/5"
                     )}
                   >
                     <div>
@@ -187,7 +190,7 @@ export default function SiteHeader() {
         </div>
 
         {/* Auth */}
-        <div className="hidden md:flex gap-2">
+        <div className="hidden gap-2 md:flex">
           <Link
             href="/login"
             className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10"
@@ -201,7 +204,6 @@ export default function SiteHeader() {
             Join
           </Link>
         </div>
-
       </div>
     </header>
   );
