@@ -17,6 +17,8 @@ type ClubRow = {
   tier: Tier;
   guests_max: 1 | 2;
   clubhouse_contribution_gbp: number;
+  hosts_count: number; // ✅ from the view
+  is_active?: boolean | null; // optional (view has it)
 };
 
 type Grouped = Record<
@@ -52,9 +54,14 @@ export default function BrowsePage() {
       setLoading(true);
       setErr(null);
 
+      // ✅ IMPORTANT: query the VIEW not the clubs table
       const { data, error } = await supabase
-        .from("clubs")
-        .select("id,name,town,country,tier,guests_max,clubhouse_contribution_gbp")
+        .from("club_directory")
+        .select(
+          "id,name,town,country,tier,guests_max,clubhouse_contribution_gbp,hosts_count,is_active"
+        )
+        .eq("is_active", true)
+        .order("hosts_count", { ascending: false })
         .order("country", { ascending: true })
         .order("tier", { ascending: false })
         .order("name", { ascending: true });
@@ -102,7 +109,8 @@ export default function BrowsePage() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="text-3xl font-semibold tracking-tight">Browse clubs</h1>
         <p className="mt-2 max-w-2xl text-white/70">
-          Clubs grouped by country. Prestigious clubs are shown first, followed by curated selections.
+          Clubs grouped by country. Prestigious clubs are shown first, followed
+          by curated selections.
         </p>
 
         {loading && <p className="mt-8 text-white/70">Loading clubs…</p>}
@@ -168,7 +176,9 @@ function ClubCard({ c }: { c: ClubRow }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-lg font-semibold">{c.name}</div>
-          {location && <div className="mt-1 text-sm text-white/70">{location}</div>}
+          {location && (
+            <div className="mt-1 text-sm text-white/70">{location}</div>
+          )}
         </div>
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
           {c.tier}
@@ -180,7 +190,13 @@ function ClubCard({ c }: { c: ClubRow }) {
           <div className="text-xs text-white/70">Guests allowed</div>
           <div className="text-lg font-semibold">{c.guests_max}</div>
         </div>
+
         <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="text-xs text-white/70">Hosts on platform</div>
+          <div className="text-lg font-semibold">{c.hosts_count ?? 0}</div>
+        </div>
+
+        <div className="col-span-2 rounded-xl border border-white/10 bg-white/5 p-3">
           <div className="text-xs text-white/70">Clubhouse contribution</div>
           <div className="text-lg font-semibold">
             £{Number(c.clubhouse_contribution_gbp || 0).toLocaleString("en-GB")}
