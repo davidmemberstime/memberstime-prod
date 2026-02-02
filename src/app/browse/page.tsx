@@ -4,39 +4,41 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import SiteHeader from "@/components/SiteHeader";
 import { supabase } from "@/lib/supabase/client";
 
-type Tier = "Curated" | "Prestigious" | string;
+type Tier = "Curated" | "Prestigious";
 
 type ClubRow = {
   id: string;
   name: string;
   town: string | null;
   region: string | null;
-  country: string | null;
+  country: string;
   tier: Tier;
-  guests_max: number | null;
-  clubhouse_contribution_gbp: number | null;
-  hosts_count: number | null;
+  guests_max: 1 | 2;
+  clubhouse_contribution_gbp: number;
+  hosts_count: number;
   is_active?: boolean | null;
-  logo_url?: string | null;
 };
 
-function formatLocation(town: string | null, region: string | null, country: string | null) {
-  const parts = [town, region, country]
-    .map((x) => (x || "").trim())
-    .filter(Boolean);
-
-  const out: string[] = [];
-  for (const p of parts) {
-    if (!out.some((d) => d.toLowerCase() === p.toLowerCase())) out.push(p);
-  }
-  return out.join(", ");
+function cx(...classes: Array<string | false | undefined | null>) {
+  return classes.filter(Boolean).join(" ");
 }
 
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
+function formatLocation(townRaw: string | null, regionRaw: string | null) {
+  const town = (townRaw || "").trim();
+  const region = (regionRaw || "").trim();
+  if (!town && !region) return "";
+  if (!town) return region;
+  if (!region) return town;
+  if (town.toLowerCase() === region.toLowerCase()) return region;
+  return `${town}, ${region}`;
+}
+
+function currencyGBP(n: number) {
+  return `£${Number(n || 0).toLocaleString("en-GB")}`;
 }
 
 export default function BrowsePage() {
@@ -44,10 +46,10 @@ export default function BrowsePage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // Match your screenshot controls
+  // UI controls
   const [country, setCountry] = useState<string>("England");
-  const [listMode, setListMode] = useState<"Top 100" | "Top 200" | "Top 500" | "All">("Top 100");
-  const [hideUnavailable, setHideUnavailable] = useState(true);
+  const [limitMode, setLimitMode] = useState<"top100" | "all">("top100");
+  const [hideUnavailable, setHideUnavailable] = useState<boolean>(false);
 
   useEffect(() => {
     let alive = true;
@@ -59,10 +61,11 @@ export default function BrowsePage() {
       const { data, error } = await supabase
         .from("club_directory")
         .select(
-          "id,name,town,region,country,tier,guests_max,clubhouse_contribution_gbp,hosts_count,is_active,logo_url"
+          "id,name,town,region,country,tier,guests_max,clubhouse_contribution_gbp,hosts_count,is_active"
         )
+        .eq("is_active", true)
+        .order("tier", { ascending: false }) // Prestigious before Curated (alphabetically works too, but keep stable)
         .order("hosts_count", { ascending: false })
-        .order("tier", { ascending: false })
         .order("name", { ascending: true });
 
       if (!alive) return;
@@ -83,138 +86,140 @@ export default function BrowsePage() {
     };
   }, []);
 
-  const limit = useMemo(() => {
-    if (listMode === "Top 100") return 100;
-    if (listMode === "Top 200") return 200;
-    if (listMode === "Top 500") return 500;
-    return 999999;
-  }, [listMode]);
-
   const countries = useMemo(() => {
     const set = new Set<string>();
-    for (const c of clubs) {
-      const v = (c.country || "").trim();
-      if (v) set.add(v);
-    }
-    const sorted = Array.from(set).sort((a, b) => a.localeCompare(b));
-    // Put England first if present
-    return ["England", ...sorted.filter((x) => x !== "England")];
+    for (const c of clubs) set.add((c.country || "Unknown").trim() || "Unknown");
+    const arr = Array.from(set).sort((a, b) => a.localeCompare(b));
+    // keep England first if it exists (matches your reference)
+    return arr.includes("England")
+      ? ["England", ...arr.filter((x) => x !== "England")]
+      : arr;
   }, [clubs]);
 
+  // If England isn't present, fallback to first country
+  useEffect(() => {
+    if (!countries.length) return;
+    if (!countries.includes(country)) setCountry(countries[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countries.join("|")]);
+
   const filtered = useMemo(() => {
-    let list = clubs;
+    let list = clubs.filter((c) => (c.country || "Unknown") === country);
 
-    if (hideUnavailable) list = list.filter((c) => c.is_active !== false);
+    if (hideUnavailable) {
+      list = list.filter((c) => (c.hosts_count ?? 0) > 0);
+    }
 
-    // country filter (default England like your screenshot)
-    list = list.filter((c) => (c.country || "").trim() === country);
+    // Split by tier to match “Prestigious then Curated”
+    const prestigious = list
+      .filter((c) => c.tier === "Prestigious")
+      .sort((a, b) => (b.hosts_count ?? 0) - (a.hosts_count ?? 0) || a.name.localeCompare(b.name));
 
-    // Already ordered; just slice top N
-    return list.slice(0, limit);
-  }, [clubs, hideUnavailable, country, limit]);
+    const curated = list
+      .filter((c) => c.tier !== "Prestigious")
+      .sort((a, b) => (b.hosts_count ?? 0) - (a.hosts_count ?? 0) || a.name.localeCompare(b.name));
 
-  const heading = listMode === "All" ? "Browse clubs in" : `Browse ${listMode} in`;
+    let merged = [...prestigious, ...curated];
+
+    if (limitMode === "top100") merged = merged.slice(0, 100);
+
+    return { prestigious, curated, merged, totalInCountry: list.length };
+  }, [clubs, country, hideUnavailable, limitMode]);
 
   return (
-    <main className="min-h-screen bg-[#071a14] text-white">
+    <main className="min-h-screen bg-[#0b221b] text-white">
       <SiteHeader />
 
-      {/* HERO like the reference */}
+      {/* HERO (like your reference image) */}
       <section className="relative">
-        <div
-          className="h-[260px] w-full bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "linear-gradient(to bottom, rgba(7,26,20,.2), rgba(7,26,20,.95)), url('/hero-golf.jpg')",
-          }}
-        />
-        <div className="absolute inset-0 flex items-end">
-          <div className="mx-auto w-full max-w-6xl px-4 pb-10">
-            <h1 className="text-4xl font-semibold tracking-tight">
-              {heading} {country}
+        <div className="relative h-[240px] w-full md:h-[280px]">
+          {/* If you later upload a hero image, change src to "/hero/browse-hero.jpg" */}
+          <Image
+            src="/hero/browse-hero.jpg"
+            alt="Members Time"
+            fill
+            className="object-cover"
+            priority
+            onError={(e) => {
+              // fallback: no hero image yet, keep background
+              const img = e.currentTarget as unknown as HTMLImageElement;
+              img.style.display = "none";
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-[#0b221b]" />
+        </div>
+
+        <div className="mx-auto -mt-24 max-w-6xl px-4 pb-8">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-8">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              Browse clubs
             </h1>
             <p className="mt-2 max-w-2xl text-white/70">
-              A curated directory of private clubs available to Members Time guests.
+              Explore top private clubs available to Members Time guests. Prestigious clubs shown first.
             </p>
 
-            {/* Filter bar (same “feel” as the screenshot) */}
-            <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-white/70">Country</span>
-                  <select
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="rounded-xl border border-white/10 bg-[#0b221b] px-3 py-2 text-sm text-white outline-none"
-                  >
-                    {countries.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-white/70">List</span>
-                  <select
-                    value={listMode}
-                    onChange={(e) => setListMode(e.target.value as any)}
-                    className="rounded-xl border border-white/10 bg-[#0b221b] px-3 py-2 text-sm text-white outline-none"
-                  >
-                    <option>Top 100</option>
-                    <option>Top 200</option>
-                    <option>Top 500</option>
-                    <option>All</option>
-                  </select>
-                </div>
+            {/* Controls row (matches your reference controls) */}
+            <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={country}
+                  onChange={setCountry}
+                  options={countries.map((c) => ({ value: c, label: c }))}
+                />
+                <Select
+                  value={limitMode}
+                  onChange={(v) => setLimitMode(v as "top100" | "all")}
+                  options={[
+                    { value: "top100", label: "Top 100" },
+                    { value: "all", label: "All clubs" },
+                  ]}
+                />
               </div>
 
-              <label className="flex items-center gap-3 text-sm text-white/70">
-                <span>Hide unavailable</span>
-                <button
-                  type="button"
-                  onClick={() => setHideUnavailable((v) => !v)}
-                  className={cx(
-                    "relative h-6 w-11 rounded-full border border-white/10 transition",
-                    hideUnavailable ? "bg-[#c58a3a]" : "bg-white/10"
-                  )}
-                >
-                  <span
+              <div className="flex items-center justify-between gap-4 md:justify-end">
+                <div className="text-sm text-white/60">
+                  {limitMode === "top100" ? "Showing top 100" : "Showing all"} •{" "}
+                  {filtered.merged.length} clubs
+                </div>
+
+                <label className="flex items-center gap-2 text-sm text-white/80">
+                  <span>Hide unavailable</span>
+                  <button
+                    type="button"
+                    onClick={() => setHideUnavailable((s) => !s)}
                     className={cx(
-                      "absolute top-1 h-4 w-4 rounded-full bg-[#071a14] transition",
-                      hideUnavailable ? "left-6" : "left-1"
+                      "relative h-6 w-11 rounded-full border border-white/15 transition",
+                      hideUnavailable ? "bg-[#c58a3a]" : "bg-white/10"
                     )}
-                  />
-                </button>
-              </label>
+                    aria-pressed={hideUnavailable}
+                  >
+                    <span
+                      className={cx(
+                        "absolute top-1 h-4 w-4 rounded-full bg-white transition",
+                        hideUnavailable ? "left-6" : "left-1"
+                      )}
+                    />
+                  </button>
+                </label>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CONTENT */}
-      <section className="mx-auto max-w-6xl px-4 py-10">
-        {loading && <p className="text-white/70">Loading clubs…</p>}
-        {err && <p className="text-red-300">{err}</p>}
+      {/* LIST */}
+      <section className="mx-auto max-w-6xl px-4 pb-16">
+        {loading && <p className="mt-8 text-white/70">Loading clubs…</p>}
+        {err && <p className="mt-8 text-red-300">{err}</p>}
 
-        {!loading && !err && (
-          <div className="mb-4 flex items-center justify-between">
-            <div className="text-sm text-white/60">
-              Showing <span className="text-white/80">{filtered.length}</span>{" "}
-              {filtered.length === 1 ? "club" : "clubs"}
-            </div>
-          </div>
+        {!loading && !err && filtered.merged.length === 0 && (
+          <p className="mt-8 text-white/70">No clubs found.</p>
         )}
 
-        {!loading && !err && filtered.length === 0 && (
-          <p className="text-white/70">No clubs found.</p>
-        )}
-
-        {!loading && !err && filtered.length > 0 && (
-          <div className="space-y-3">
-            {filtered.map((c) => (
-              <ClubRowItem key={c.id} c={c} />
+        {!loading && !err && filtered.merged.length > 0 && (
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+            {filtered.merged.map((c, idx) => (
+              <ClubRowListItem key={c.id} c={c} isFirst={idx === 0} />
             ))}
           </div>
         )}
@@ -223,56 +228,107 @@ export default function BrowsePage() {
   );
 }
 
-function ClubRowItem({ c }: { c: ClubRow }) {
-  const location = formatLocation(c.town, c.region, c.country);
-  const hosts = Number(c.hosts_count || 0);
-  const fee = Number(c.clubhouse_contribution_gbp || 0);
-  const guests = c.guests_max ?? 2;
+function Select({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="appearance-none rounded-full border border-white/10 bg-white/5 px-4 py-2 pr-10 text-sm text-white outline-none hover:bg-white/10"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} className="text-black">
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/60">
+        ▾
+      </span>
+    </div>
+  );
+}
+
+function ClubRowListItem({ c, isFirst }: { c: ClubRow; isFirst: boolean }) {
+  const location = formatLocation(c.town, c.region);
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition hover:bg-white/7 sm:flex-row">
-      {/* Left image block (like screenshot) */}
-      <div className="relative h-40 w-full shrink-0 sm:h-[100px] sm:w-[170px]">
-        {c.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={c.logo_url} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-white/5 text-white/50">
-            <span className="text-xs">Club</span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/0 to-black/25" />
-      </div>
-
-      {/* Middle */}
-      <div className="flex flex-1 flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="truncate text-lg font-semibold text-white">{c.name}</div>
-            <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/75">
-              {c.tier === "Prestigious" ? "Prestigious" : "Curated"}
-            </span>
-          </div>
-
-          <div className="mt-1 text-sm text-white/70">{location}</div>
-
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/60">
-            <span>Guests: {guests}</span>
-            <span>Clubhouse contribution: £{fee.toLocaleString("en-GB")}</span>
-          </div>
+    <div
+      className={cx(
+        "flex flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:gap-6",
+        !isFirst && "border-t border-white/10"
+      )}
+    >
+      {/* Left: thumbnail + name */}
+      <div className="flex items-center gap-4">
+        <div className="relative h-14 w-20 overflow-hidden rounded-lg border border-white/10 bg-white/5">
+          {/* Optional: later swap to per-club images if you add them */}
+          <Image
+            src="/hero/club-thumb.jpg"
+            alt=""
+            fill
+            className="object-cover"
+            onError={(e) => {
+              const img = e.currentTarget as unknown as HTMLImageElement;
+              img.style.display = "none";
+            }}
+          />
         </div>
 
-        {/* Right (badge + CTA like screenshot) */}
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
-            <span className="font-semibold text-white/90">{hosts}</span> Verified Members
+        <div className="min-w-0">
+          <div className="truncate text-base font-semibold text-white">
+            {c.name}
+          </div>
+          <div className="mt-0.5 text-sm text-white/65">
+            {location || c.country}
           </div>
 
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/60">
+            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">
+              {c.tier}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">
+              Guests: {c.guests_max}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">
+              Contribution: {currencyGBP(c.clubhouse_contribution_gbp)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: verified members + button */}
+      <div className="flex flex-col gap-2 md:items-end">
+        <div className="text-sm text-white/70">
+          <span className="font-semibold text-white">
+            {c.hosts_count ?? 0}
+          </span>{" "}
+          Verified Members
+        </div>
+
+        <div className="flex gap-2">
           <a
             href={`/clubs/${encodeURIComponent(c.id)}`}
-            className="inline-flex items-center justify-center rounded-xl bg-[#c58a3a] px-4 py-2 text-sm font-semibold text-[#0b2a1f] hover:brightness-110"
+            className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
           >
-            View club
+            View Club
+          </a>
+
+          <a
+            href={`/search?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(
+              c.name
+            )}`}
+            className="inline-flex items-center justify-center rounded-full bg-[#c58a3a] px-4 py-2 text-sm font-semibold text-[#0b2a1f] hover:brightness-110"
+          >
+            View Hosts
           </a>
         </div>
       </div>
