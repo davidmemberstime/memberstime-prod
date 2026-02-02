@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
@@ -35,6 +34,7 @@ export default function SiteHeader() {
     () => [
       { href: "/", label: "Home" },
       { href: "/browse", label: "Clubs" },
+      { href: "/search", label: "Member search" },
       { href: "/how-it-works", label: "How it works" },
     ],
     []
@@ -58,7 +58,6 @@ export default function SiteHeader() {
     if (!q) {
       setResults([]);
       setLoading(false);
-      setActiveIndex(-1);
       return;
     }
 
@@ -74,7 +73,6 @@ export default function SiteHeader() {
 
       setResults((data as ClubHit[]) || []);
       setOpen(true);
-      setActiveIndex(-1);
       setLoading(false);
     }, 180);
 
@@ -86,7 +84,6 @@ export default function SiteHeader() {
   function goToClub(id: string) {
     setOpen(false);
     setQuery("");
-    setActiveIndex(-1);
     router.push(`/clubs/${encodeURIComponent(id)}`);
   }
 
@@ -96,42 +93,38 @@ export default function SiteHeader() {
       setActiveIndex((i) => Math.min(i + 1, results.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === "Enter") {
-      if (activeIndex >= 0 && results[activeIndex]) {
-        e.preventDefault();
-        goToClub(results[activeIndex].id);
-      }
+      setActiveIndex((i) => Math.max(i - 1, -1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      goToClub(results[activeIndex].id);
     } else if (e.key === "Escape") {
       setOpen(false);
-      setActiveIndex(-1);
     }
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/10 bg-[#123326]/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
-        {/* Brand */}
-        <Link href="/" className="flex items-center gap-3">
-          <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10">
-            <Image
-              src="/memberstime-logo.png"
-              alt="Members Time"
-              fill
-              className="object-contain p-1"
-              priority
-            />
-          </div>
-          <div className="leading-tight">
-            <div className="text-sm font-semibold text-white">Members Time</div>
-            <div className="text-[11px] text-white/60">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0f2b22]/95 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
+
+        {/* ===== BRAND / LOGO ===== */}
+        <Link href="/" className="flex items-center gap-4">
+          <img
+            src="/memberstime-logo.png"
+            alt="Members Time"
+            className="h-10 w-auto md:h-12"
+          />
+          <div className="hidden sm:block">
+            <div className="text-base font-semibold text-white">
+              Members Time
+            </div>
+            <div className="text-xs text-white/60 tracking-wide">
               Hosted. Verified. Respectful.
             </div>
           </div>
         </Link>
 
-        {/* Nav */}
-        <nav className="hidden items-center gap-1 md:flex">
+        {/* ===== NAV ===== */}
+        <nav className="hidden gap-1 md:flex">
           {nav.map((n) => {
             const active = pathname === n.href;
             return (
@@ -139,33 +132,21 @@ export default function SiteHeader() {
                 key={n.href}
                 href={n.href}
                 className={cx(
-                  "rounded-full px-4 py-2 text-sm font-medium transition",
+                  "rounded-xl px-3 py-2 text-sm font-medium transition",
                   active
                     ? "bg-white/10 text-white"
-                    : "text-white/75 hover:bg-white/5 hover:text-white"
+                    : "text-white/70 hover:bg-white/5 hover:text-white"
                 )}
               >
                 {n.label}
               </Link>
             );
           })}
-
-          <Link
-            href="/search"
-            className={cx(
-              "rounded-full px-4 py-2 text-sm font-medium transition",
-              pathname === "/search"
-                ? "bg-white/10 text-white"
-                : "text-white/75 hover:bg-white/5 hover:text-white"
-            )}
-          >
-            Member search
-          </Link>
         </nav>
 
-        {/* Search */}
+        {/* ===== SEARCH ===== */}
         <div ref={wrapperRef} className="relative ml-auto w-full max-w-xl">
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
             <span className="text-white/60">⌕</span>
             <input
               value={query}
@@ -173,15 +154,15 @@ export default function SiteHeader() {
               onFocus={() => setOpen(true)}
               onKeyDown={onKeyDown}
               placeholder="Search clubs…"
-              className="w-full bg-transparent text-sm text-white placeholder:text-white/45 outline-none"
+              className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
             />
             {loading && (
-              <span className="text-[12px] text-white/60">Searching…</span>
+              <span className="text-xs text-white/60">Searching…</span>
             )}
           </div>
 
-          {open && query.trim() && (
-            <div className="absolute left-0 right-0 mt-2 overflow-hidden rounded-2xl border border-white/10 bg-[#0e261e] shadow-2xl">
+          {open && query && (
+            <div className="absolute left-0 right-0 mt-2 overflow-hidden rounded-2xl border border-white/10 bg-[#0b221b] shadow-xl">
               {results.length === 0 ? (
                 <div className="px-4 py-3 text-sm text-white/60">
                   No clubs found
@@ -193,20 +174,17 @@ export default function SiteHeader() {
                     onClick={() => goToClub(c.id)}
                     onMouseEnter={() => setActiveIndex(i)}
                     className={cx(
-                      "flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition",
+                      "flex w-full justify-between px-4 py-3 text-left text-sm transition",
                       i === activeIndex ? "bg-white/10" : "hover:bg-white/5"
                     )}
                   >
-                    <div className="min-w-0">
-                      <div className="truncate font-semibold text-white">
-                        {c.name}
-                      </div>
-                      <div className="truncate text-xs text-white/60">
+                    <div>
+                      <div className="font-semibold text-white">{c.name}</div>
+                      <div className="text-xs text-white/60">
                         {[c.region, c.country].filter(Boolean).join(", ")}
                       </div>
                     </div>
-
-                    <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/70">
                       {c.tier}
                     </span>
                   </button>
@@ -216,17 +194,17 @@ export default function SiteHeader() {
           )}
         </div>
 
-        {/* Auth */}
-        <div className="hidden items-center gap-2 md:flex">
+        {/* ===== AUTH ===== */}
+        <div className="hidden gap-2 md:flex">
           <Link
             href="/login"
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10"
           >
             Sign in
           </Link>
           <Link
             href="/join"
-            className="rounded-full bg-[#c58a3a] px-4 py-2 text-sm font-semibold text-[#0b2a1f] hover:brightness-110"
+            className="rounded-xl bg-[#c58a3a] px-4 py-2 text-sm font-semibold text-[#0b2a1f]"
           >
             Join
           </Link>
