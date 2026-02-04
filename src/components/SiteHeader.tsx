@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
@@ -24,6 +24,7 @@ function cn(...classes: Array<string | false | null | undefined>) {
 export default function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
+  const isHome = pathname === "/";
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ClubHit[]>([]);
@@ -35,7 +36,6 @@ export default function SiteHeader() {
   const mobileWrapRef = useRef<HTMLDivElement | null>(null);
   const debounceRef = useRef<number | null>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function onDown(e: MouseEvent) {
       const t = e.target as Node;
@@ -50,7 +50,6 @@ export default function SiteHeader() {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  // Debounced Supabase search
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
 
@@ -135,10 +134,10 @@ export default function SiteHeader() {
   }
 
   const nav = [
-    { href: "/browse", label: "Browse" },
-    { href: "/rankings", label: "Rankings" },
-    { href: "/pricing", label: "Membership" },
-    { href: "/about", label: "About" },
+    { href: "/browse", label: "How It Works" },
+    { href: "/pricing", label: "For Guests" },
+    { href: "/rankings", label: "For Members" },
+    { href: "/clubs", label: "For Clubs" },
   ];
 
   const isActive = (href: string) => {
@@ -148,30 +147,34 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Slimmer, premium bar */}
-      <div className="bg-[#041b14]/72 backdrop-blur-xl supports-[backdrop-filter]:bg-[#041b14]/55 border-b border-white/10">
+      {/* On homepage: transparent overlay. Else: your normal blurred bar. */}
+      <div
+        className={cn(
+          "transition-colors",
+          isHome
+            ? "bg-transparent"
+            : "bg-[#041b14]/72 backdrop-blur-xl supports-[backdrop-filter]:bg-[#041b14]/55 border-b border-white/10"
+        )}
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          {/* Slightly slimmer than before, calmer rhythm */}
-          <div className="h-[72px] flex items-center justify-between gap-6">
-            {/* Logo */}
+          <div className="h-[74px] flex items-center justify-between gap-6">
             <div className="flex items-center">
               <Link href="/" aria-label="Members Time home" className="flex items-center">
-                <div className="relative h-[40px] w-[190px]">
+                <div className="relative h-[44px] w-[220px] translate-y-[1px]">
                   <Image
                     src="/memberstime-headerlogo.png"
                     alt="Members Time"
                     fill
                     priority
                     className="object-contain object-left"
-                    sizes="190px"
+                    sizes="220px"
                   />
                 </div>
               </Link>
             </div>
 
-            {/* Center nav (editorial spacing) */}
             <nav className="hidden md:flex flex-1 justify-center">
-              <ul className="flex items-center gap-12">
+              <ul className="flex items-center gap-10">
                 {nav.map((item) => {
                   const active = isActive(item.href);
                   return (
@@ -180,7 +183,7 @@ export default function SiteHeader() {
                         href={item.href}
                         className={cn(
                           "text-[12px] uppercase tracking-[0.22em] transition-colors",
-                          active ? "text-white" : "text-white/70 hover:text-white"
+                          active ? "text-white" : "text-white/75 hover:text-white"
                         )}
                       >
                         {item.label}
@@ -197,20 +200,17 @@ export default function SiteHeader() {
               </ul>
             </nav>
 
-            {/* Right side */}
             <div className="flex items-center justify-end gap-4">
-              {/* Desktop search: NOT a pill. Minimal, underline style. */}
-              <div ref={desktopWrapRef} className="relative hidden sm:block w-[260px] lg:w-[300px]">
+              <div ref={desktopWrapRef} className="relative hidden sm:block w-[250px] lg:w-[290px]">
                 <div
                   className={cn(
-                    "flex items-center gap-3",
-                    "px-1",
-                    "border-b border-white/18",
-                    "focus-within:border-white/35",
+                    "flex items-center gap-3 px-1",
+                    "border-b border-white/25",
+                    "focus-within:border-white/45",
                     "transition"
                   )}
                 >
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/55 translate-y-[1px]" />
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/60 translate-y-[1px]" />
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -220,16 +220,14 @@ export default function SiteHeader() {
                     onKeyDown={onKeyDown}
                     placeholder="Search clubs"
                     className={cn(
-                      "w-full bg-transparent",
-                      "h-[34px]",
-                      "text-[13px] tracking-wide text-white placeholder:text-white/45",
-                      "outline-none"
+                      "w-full bg-transparent h-[34px]",
+                      "text-[13px] tracking-wide text-white placeholder:text-white/55 outline-none"
                     )}
                     aria-label="Search clubs"
                     autoComplete="off"
                   />
                   {loading ? (
-                    <span className="text-[11px] tracking-[0.3em] text-white/45">…</span>
+                    <span className="text-[11px] tracking-[0.3em] text-white/55">…</span>
                   ) : null}
                 </div>
 
@@ -276,36 +274,15 @@ export default function SiteHeader() {
                 )}
               </div>
 
-              {/* CTAs: less chunky than pills */}
               <Link
                 href="/signin"
-                className={cn(
-                  "hidden sm:inline-flex items-center justify-center",
-                  "h-[34px] px-3",
-                  "text-[12px] uppercase tracking-[0.22em]",
-                  "text-white/75 hover:text-white transition-colors"
-                )}
+                className="hidden sm:inline-flex items-center justify-center h-[32px] px-3 text-[11px] uppercase tracking-[0.22em] text-white/80 hover:text-white transition-colors border border-white/35"
               >
                 Sign in
-              </Link>
-
-              <Link
-                href="/join"
-                className={cn(
-                  "inline-flex items-center justify-center",
-                  "h-[34px] px-4",
-                  "text-[12px] uppercase tracking-[0.22em]",
-                  "text-[#041b14]",
-                  "bg-[#d8b35a] hover:bg-[#e2c06d]",
-                  "transition"
-                )}
-              >
-                Join
               </Link>
             </div>
           </div>
 
-          {/* Mobile nav + search */}
           <div className="md:hidden pb-4">
             <nav className="pt-1">
               <ul className="flex items-center gap-6 overflow-x-auto no-scrollbar">
@@ -317,7 +294,7 @@ export default function SiteHeader() {
                         href={item.href}
                         className={cn(
                           "text-[11px] uppercase tracking-[0.22em] transition-colors",
-                          active ? "text-white" : "text-white/70 hover:text-white"
+                          active ? "text-white" : "text-white/75 hover:text-white"
                         )}
                       >
                         {item.label}
@@ -329,16 +306,8 @@ export default function SiteHeader() {
             </nav>
 
             <div ref={mobileWrapRef} className="relative mt-4">
-              <div
-                className={cn(
-                  "flex items-center gap-3",
-                  "px-1",
-                  "border-b border-white/18",
-                  "focus-within:border-white/35",
-                  "transition"
-                )}
-              >
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/55 translate-y-[1px]" />
+              <div className="flex items-center gap-3 px-1 border-b border-white/25 focus-within:border-white/45 transition">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/60 translate-y-[1px]" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -347,17 +316,12 @@ export default function SiteHeader() {
                   }}
                   onKeyDown={onKeyDown}
                   placeholder="Search clubs"
-                  className={cn(
-                    "w-full bg-transparent",
-                    "h-[34px]",
-                    "text-[13px] tracking-wide text-white placeholder:text-white/45",
-                    "outline-none"
-                  )}
+                  className="w-full bg-transparent h-[34px] text-[13px] tracking-wide text-white placeholder:text-white/55 outline-none"
                   aria-label="Search clubs"
                   autoComplete="off"
                 />
                 {loading ? (
-                  <span className="text-[11px] tracking-[0.3em] text-white/45">…</span>
+                  <span className="text-[11px] tracking-[0.3em] text-white/55">…</span>
                 ) : null}
               </div>
 
@@ -380,16 +344,7 @@ export default function SiteHeader() {
                               active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
                             )}
                           >
-                            <div className="flex items-baseline justify-between gap-3">
-                              <div className="text-[13px] text-white/92 tracking-wide">
-                                {r.name}
-                              </div>
-                              {r.tier ? (
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/55">
-                                  {r.tier}
-                                </div>
-                              ) : null}
-                            </div>
+                            <div className="text-[13px] text-white/92 tracking-wide">{r.name}</div>
                             {meta ? (
                               <div className="mt-1 text-[11px] tracking-[0.16em] uppercase text-white/45">
                                 {meta}
@@ -402,32 +357,6 @@ export default function SiteHeader() {
                   </ul>
                 </div>
               )}
-            </div>
-
-            <div className="mt-4 flex items-center gap-4">
-              <Link
-                href="/signin"
-                className={cn(
-                  "text-[11px] uppercase tracking-[0.22em]",
-                  "text-white/75 hover:text-white transition-colors"
-                )}
-              >
-                Sign in
-              </Link>
-
-              <Link
-                href="/join"
-                className={cn(
-                  "inline-flex items-center justify-center",
-                  "h-[34px] px-4",
-                  "text-[11px] uppercase tracking-[0.22em]",
-                  "text-[#041b14]",
-                  "bg-[#d8b35a] hover:bg-[#e2c06d]",
-                  "transition"
-                )}
-              >
-                Join
-              </Link>
             </div>
           </div>
         </div>
