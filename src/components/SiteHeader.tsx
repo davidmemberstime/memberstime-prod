@@ -36,11 +36,13 @@ export default function SiteHeader() {
   const mobileWrapRef = useRef<HTMLDivElement | null>(null);
   const debounceRef = useRef<number | null>(null);
 
+  // Close dropdown on outside click
   useEffect(() => {
     function onDown(e: MouseEvent) {
       const t = e.target as Node;
       const inDesktop = desktopWrapRef.current?.contains(t);
       const inMobile = mobileWrapRef.current?.contains(t);
+
       if (!inDesktop && !inMobile) {
         setOpen(false);
         setActiveIndex(-1);
@@ -50,6 +52,7 @@ export default function SiteHeader() {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
+  // Debounced Supabase search (kept exactly as working)
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
 
@@ -133,24 +136,19 @@ export default function SiteHeader() {
     }
   }
 
+  // MENU based ONLY on your real folders/routes
   const nav = [
-    { href: "/browse", label: "How It Works" },
-    { href: "/pricing", label: "For Guests" },
-    { href: "/rankings", label: "For Members" },
-    { href: "/clubs", label: "For Clubs" },
+    { href: "/browse", label: "Browse" },
+    { href: "/search", label: "Search" },
   ];
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname?.startsWith(href);
-  };
+  const isActive = (href: string) => pathname === href || pathname?.startsWith(href + "/");
 
   return (
     <header className="sticky top-0 z-50">
-      {/* On homepage: transparent overlay. Else: your normal blurred bar. */}
+      {/* Homepage = transparent overlay. Other pages = blurred bar */}
       <div
         className={cn(
-          "transition-colors",
           isHome
             ? "bg-transparent"
             : "bg-[#041b14]/72 backdrop-blur-xl supports-[backdrop-filter]:bg-[#041b14]/55 border-b border-white/10"
@@ -158,6 +156,7 @@ export default function SiteHeader() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="h-[74px] flex items-center justify-between gap-6">
+            {/* Header logo (header-only file, as requested) */}
             <div className="flex items-center">
               <Link href="/" aria-label="Members Time home" className="flex items-center">
                 <div className="relative h-[44px] w-[220px] translate-y-[1px]">
@@ -173,6 +172,7 @@ export default function SiteHeader() {
               </Link>
             </div>
 
+            {/* Center menu */}
             <nav className="hidden md:flex flex-1 justify-center">
               <ul className="flex items-center gap-10">
                 {nav.map((item) => {
@@ -200,17 +200,139 @@ export default function SiteHeader() {
               </ul>
             </nav>
 
+            {/* Right side */}
             <div className="flex items-center justify-end gap-4">
-              <div ref={desktopWrapRef} className="relative hidden sm:block w-[250px] lg:w-[290px]">
-                <div
-                  className={cn(
-                    "flex items-center gap-3 px-1",
-                    "border-b border-white/25",
-                    "focus-within:border-white/45",
-                    "transition"
-                  )}
+              {/* On homepage: match concept (menu + SIGN IN only) */}
+              {isHome ? (
+                <Link
+                  href="/auth/sign-in"
+                  className="hidden sm:inline-flex items-center justify-center h-[32px] px-4 text-[11px] uppercase tracking-[0.22em] text-white/90 hover:text-white transition-colors border border-white/45 bg-white/0 hover:bg-white/5"
                 >
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/60 translate-y-[1px]" />
+                  Sign in
+                </Link>
+              ) : (
+                <>
+                  {/* On inner pages: keep your working search + CTAs */}
+                  <div
+                    ref={desktopWrapRef}
+                    className="relative hidden sm:block w-[250px] lg:w-[290px]"
+                  >
+                    <div className="flex items-center gap-3 px-1 border-b border-white/18 focus-within:border-white/38 transition">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/55 translate-y-[1px]" />
+                      <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onFocus={() => {
+                          if (results.length) setOpen(true);
+                        }}
+                        onKeyDown={onKeyDown}
+                        placeholder="Search clubs"
+                        className="w-full bg-transparent h-[34px] text-[13px] tracking-wide text-white placeholder:text-white/45 outline-none"
+                        aria-label="Search clubs"
+                        autoComplete="off"
+                      />
+                      {loading ? (
+                        <span className="text-[11px] tracking-[0.3em] text-white/45">…</span>
+                      ) : null}
+                    </div>
+
+                    {open && results.length > 0 && (
+                      <div className="absolute mt-3 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#061f18]/96 backdrop-blur-xl shadow-2xl">
+                        <ul className="py-1">
+                          {results.map((r, idx) => {
+                            const meta = [r.town, r.region, r.country].filter(Boolean).join(", ");
+                            const active = idx === activeIndex;
+
+                            return (
+                              <li key={r.id}>
+                                <button
+                                  type="button"
+                                  onMouseEnter={() => setActiveIndex(idx)}
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() => goToClub(r.id)}
+                                  className={cn(
+                                    "w-full text-left px-4 py-3 transition",
+                                    active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
+                                  )}
+                                >
+                                  <div className="flex items-baseline justify-between gap-3">
+                                    <div className="text-[13px] text-white/92 tracking-wide">
+                                      {r.name}
+                                    </div>
+                                    {r.tier ? (
+                                      <div className="text-[10px] uppercase tracking-[0.22em] text-white/55">
+                                        {r.tier}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                  {meta ? (
+                                    <div className="mt-1 text-[11px] tracking-[0.16em] uppercase text-white/45">
+                                      {meta}
+                                    </div>
+                                  ) : null}
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    href="/auth/sign-in"
+                    className="hidden sm:inline-flex items-center justify-center h-[34px] px-3 text-[12px] uppercase tracking-[0.22em] text-white/75 hover:text-white transition-colors"
+                  >
+                    Sign in
+                  </Link>
+
+                  <Link
+                    href="/auth/sign-up"
+                    className="inline-flex items-center justify-center h-[34px] px-4 text-[12px] uppercase tracking-[0.22em] text-[#041b14] bg-[#d8b35a] hover:bg-[#e2c06d] transition"
+                  >
+                    Join
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile */}
+          <div className="md:hidden pb-4">
+            <nav className="pt-1">
+              <ul className="flex items-center gap-6 overflow-x-auto no-scrollbar">
+                {nav.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <li key={item.href} className="shrink-0">
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "text-[11px] uppercase tracking-[0.22em] transition-colors",
+                          active ? "text-white" : "text-white/75 hover:text-white"
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+                <li className="shrink-0">
+                  <Link
+                    href="/auth/sign-in"
+                    className="text-[11px] uppercase tracking-[0.22em] text-white/85 hover:text-white transition-colors"
+                  >
+                    Sign in
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+
+            {/* Mobile search on inner pages only */}
+            {!isHome && (
+              <div ref={mobileWrapRef} className="relative mt-4">
+                <div className="flex items-center gap-3 px-1 border-b border-white/18 focus-within:border-white/38 transition">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/55 translate-y-[1px]" />
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -219,15 +341,12 @@ export default function SiteHeader() {
                     }}
                     onKeyDown={onKeyDown}
                     placeholder="Search clubs"
-                    className={cn(
-                      "w-full bg-transparent h-[34px]",
-                      "text-[13px] tracking-wide text-white placeholder:text-white/55 outline-none"
-                    )}
+                    className="w-full bg-transparent h-[34px] text-[13px] tracking-wide text-white placeholder:text-white/45 outline-none"
                     aria-label="Search clubs"
                     autoComplete="off"
                   />
                   {loading ? (
-                    <span className="text-[11px] tracking-[0.3em] text-white/55">…</span>
+                    <span className="text-[11px] tracking-[0.3em] text-white/45">…</span>
                   ) : null}
                 </div>
 
@@ -250,15 +369,8 @@ export default function SiteHeader() {
                                 active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
                               )}
                             >
-                              <div className="flex items-baseline justify-between gap-3">
-                                <div className="text-[13px] text-white/92 tracking-wide">
-                                  {r.name}
-                                </div>
-                                {r.tier ? (
-                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/55">
-                                    {r.tier}
-                                  </div>
-                                ) : null}
+                              <div className="text-[13px] text-white/92 tracking-wide">
+                                {r.name}
                               </div>
                               {meta ? (
                                 <div className="mt-1 text-[11px] tracking-[0.16em] uppercase text-white/45">
@@ -273,91 +385,7 @@ export default function SiteHeader() {
                   </div>
                 )}
               </div>
-
-              <Link
-                href="/signin"
-                className="hidden sm:inline-flex items-center justify-center h-[32px] px-3 text-[11px] uppercase tracking-[0.22em] text-white/80 hover:text-white transition-colors border border-white/35"
-              >
-                Sign in
-              </Link>
-            </div>
-          </div>
-
-          <div className="md:hidden pb-4">
-            <nav className="pt-1">
-              <ul className="flex items-center gap-6 overflow-x-auto no-scrollbar">
-                {nav.map((item) => {
-                  const active = isActive(item.href);
-                  return (
-                    <li key={item.href} className="shrink-0">
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "text-[11px] uppercase tracking-[0.22em] transition-colors",
-                          active ? "text-white" : "text-white/75 hover:text-white"
-                        )}
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-
-            <div ref={mobileWrapRef} className="relative mt-4">
-              <div className="flex items-center gap-3 px-1 border-b border-white/25 focus-within:border-white/45 transition">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/60 translate-y-[1px]" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onFocus={() => {
-                    if (results.length) setOpen(true);
-                  }}
-                  onKeyDown={onKeyDown}
-                  placeholder="Search clubs"
-                  className="w-full bg-transparent h-[34px] text-[13px] tracking-wide text-white placeholder:text-white/55 outline-none"
-                  aria-label="Search clubs"
-                  autoComplete="off"
-                />
-                {loading ? (
-                  <span className="text-[11px] tracking-[0.3em] text-white/55">…</span>
-                ) : null}
-              </div>
-
-              {open && results.length > 0 && (
-                <div className="absolute mt-3 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#061f18]/96 backdrop-blur-xl shadow-2xl">
-                  <ul className="py-1">
-                    {results.map((r, idx) => {
-                      const meta = [r.town, r.region, r.country].filter(Boolean).join(", ");
-                      const active = idx === activeIndex;
-
-                      return (
-                        <li key={r.id}>
-                          <button
-                            type="button"
-                            onMouseEnter={() => setActiveIndex(idx)}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => goToClub(r.id)}
-                            className={cn(
-                              "w-full text-left px-4 py-3 transition",
-                              active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
-                            )}
-                          >
-                            <div className="text-[13px] text-white/92 tracking-wide">{r.name}</div>
-                            {meta ? (
-                              <div className="mt-1 text-[11px] tracking-[0.16em] uppercase text-white/45">
-                                {meta}
-                              </div>
-                            ) : null}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </div>
