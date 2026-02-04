@@ -15,60 +15,61 @@ export default function HomePage() {
           sizes="100vw"
         />
 
-        {/* Lighter overlays (closer to your concept image) */}
-        {/* soft top blend for header */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#041b14]/45 via-transparent to-[#041b14]/55" />
-        {/* subtle vignette only (not crushing the whole image) */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.08)_0%,rgba(0,0,0,0.35)_70%,rgba(0,0,0,0.55)_100%)]" />
+        {/* VERY LIGHT overlays – image should feel bright & golden */}
+        {/* gentle top blend only, no heavy vignette */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#041b14]/25 via-transparent to-[#041b14]/35" />
       </div>
 
       {/* Content */}
       <section className="relative z-10">
-        {/* Sit under the sticky header */}
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-[110px] pb-[90px] text-center">
-          {/* BIG hero logo like concept */}
-          <div className="mx-auto mb-8 flex justify-center">
-            <div className="relative h-[120px] w-[320px] sm:h-[150px] sm:w-[400px] md:h-[170px] md:w-[460px]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-[120px] pb-[100px] text-center">
+          {/* MASSIVE hero logo (dominant, like concept) */}
+          <div className="mx-auto mb-10 flex justify-center">
+            <div className="relative
+              h-[260px] w-[640px]
+              sm:h-[300px] sm:w-[720px]
+              md:h-[340px] md:w-[820px]
+            ">
               <Image
                 src="/memberstime-logo.png"
                 alt="Members Time"
                 fill
-                className="object-contain"
-                sizes="460px"
                 priority
+                className="object-contain"
+                sizes="820px"
               />
             </div>
           </div>
 
-          <h1 className="font-serif text-[34px] sm:text-[46px] md:text-[56px] leading-tight tracking-wide drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)]">
+          <h1 className="font-serif text-[36px] sm:text-[48px] md:text-[58px] leading-tight tracking-wide">
             A hosted golf experience
             <span className="block">at the world’s great private clubs</span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-2xl text-[13px] sm:text-[14px] leading-relaxed text-white/85 tracking-wide drop-shadow-[0_2px_14px_rgba(0,0,0,0.35)]">
+          <p className="mx-auto mt-6 max-w-2xl text-[14px] sm:text-[15px] leading-relaxed text-white/90 tracking-wide">
             Play top-rated courses as an invited guest — accompanied by trusted members at exceptional private clubs.
           </p>
 
           {/* Buttons */}
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/join?type=member"
-              className="inline-flex h-[44px] w-[220px] items-center justify-center border border-white/45 bg-white/12 px-6 text-[12px] uppercase tracking-[0.22em] text-white backdrop-blur-sm transition hover:bg-white/18"
+              className="inline-flex h-[46px] w-[230px] items-center justify-center border border-white/50 bg-white/15 px-6 text-[12px] uppercase tracking-[0.24em] text-white backdrop-blur-sm transition hover:bg-white/20"
             >
               I’m a Club Member
             </Link>
 
             <Link
               href="/join?type=guest"
-              className="inline-flex h-[44px] w-[220px] items-center justify-center border border-[#d8b35a]/80 bg-[#d8b35a]/95 px-6 text-[12px] uppercase tracking-[0.22em] text-[#041b14] transition hover:bg-[#e2c06d]"
+              className="inline-flex h-[46px] w-[230px] items-center justify-center border border-[#d8b35a]/90 bg-[#d8b35a] px-6 text-[12px] uppercase tracking-[0.24em] text-[#041b14] transition hover:bg-[#e2c06d]"
             >
               I’m a Guest
             </Link>
           </div>
 
-          {/* Bottom note */}
-          <div className="mt-12 text-[11px] uppercase tracking-[0.22em] text-white/70 drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
-            By invitation <span className="mx-2">•</span> For verified members & guests{" "}
+          {/* Footer line */}
+          <div className="mt-14 text-[11px] uppercase tracking-[0.24em] text-white/75">
+            By invitation <span className="mx-2">•</span> For verified members & guests
             <span className="mx-2">•</span> In line with club culture
           </div>
         </div>
