@@ -131,10 +131,6 @@ export default function SiteHeader() {
     }
   }
 
-  // UPDATED MENU:
-  // - "How It Works" is now a NEW page we will build: /how-it-works
-  // - "Browse Clubs" points to /browse
-  // - "For Clubs" removed
   const nav = [
     { href: "/browse", label: "Browse Clubs" },
     { href: "/auth/sign-up?type=guest", label: "For Guests" },
@@ -142,31 +138,31 @@ export default function SiteHeader() {
     { href: "/how-it-works", label: "How It Works" },
   ];
 
-  const isActive = (href: string) => pathname === href || pathname?.startsWith(href + "/");
+  const isActive = (href: string) =>
+    pathname === href || pathname?.startsWith(href + "/");
 
   return (
     <header className="sticky top-0 z-50">
       <div className="border-b border-white/10 bg-[#041b14]/85 backdrop-blur-xl supports-[backdrop-filter]:bg-[#041b14]/70">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="h-[74px] flex items-center justify-between gap-6">
-            {/* Header-only logo */}
+            {/* Header-only logo (FIXED: explicit height so Image fill works) */}
             <div className="flex items-center shrink-0">
-              <Link href="/" aria-label="Members Time home" className="flex items-center">
-               <div className="relative h-full w-[260px] flex items-center">
-  <Image
-    src="/memberstime-headerlogo.png"
-    alt="Members Time"
-    fill
-    priority
-    className="object-contain object-left"
-    sizes="260px"
-  />
-</div>
-
+              <Link href="/" aria-label="Members Time home" className="block">
+                <div className="relative h-[74px] w-[280px]">
+                  <Image
+                    src="/memberstime-headerlogo.png"
+                    alt="Members Time"
+                    fill
+                    priority
+                    className="object-contain object-left"
+                    sizes="280px"
+                  />
+                </div>
               </Link>
             </div>
 
-            {/* Menu (visible on desktop) */}
+            {/* Menu */}
             <nav className="hidden md:flex flex-1 justify-center">
               <ul className="flex items-center gap-10">
                 {nav.map((item) => {
@@ -194,9 +190,13 @@ export default function SiteHeader() {
               </ul>
             </nav>
 
-            {/* Right side: search + sign in */}
+            {/* Right side */}
             <div className="flex items-center justify-end gap-4 shrink-0">
-              <div ref={desktopWrapRef} className="relative hidden sm:block w-[240px] lg:w-[280px]">
+              {/* Search */}
+              <div
+                ref={desktopWrapRef}
+                className="relative hidden sm:block w-[240px] lg:w-[280px]"
+              >
                 <div className="flex items-center gap-3 px-1 border-b border-white/20 focus-within:border-white/45 transition">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/55 translate-y-[1px]" />
                   <input
@@ -212,7 +212,9 @@ export default function SiteHeader() {
                     autoComplete="off"
                   />
                   {loading ? (
-                    <span className="text-[11px] tracking-[0.3em] text-white/55">…</span>
+                    <span className="text-[11px] tracking-[0.3em] text-white/55">
+                      …
+                    </span>
                   ) : null}
                 </div>
 
@@ -220,9 +222,7 @@ export default function SiteHeader() {
                   <div className="absolute mt-3 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#061f18]/96 backdrop-blur-xl shadow-2xl">
                     <ul className="py-1">
                       {results.map((r, idx) => {
-                        const meta = [r.town, r.region, r.country].filter(Boolean).join(", ");
                         const active = idx === activeIndex;
-
                         return (
                           <li key={r.id}>
                             <button
@@ -235,21 +235,9 @@ export default function SiteHeader() {
                                 active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
                               )}
                             >
-                              <div className="flex items-baseline justify-between gap-3">
-                                <div className="text-[13px] text-white/92 tracking-wide">
-                                  {r.name}
-                                </div>
-                                {r.tier ? (
-                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/55">
-                                    {r.tier}
-                                  </div>
-                                ) : null}
+                              <div className="text-[13px] text-white/92 tracking-wide">
+                                {r.name}
                               </div>
-                              {meta ? (
-                                <div className="mt-1 text-[11px] tracking-[0.16em] uppercase text-white/45">
-                                  {meta}
-                                </div>
-                              ) : null}
                             </button>
                           </li>
                         );
@@ -268,7 +256,7 @@ export default function SiteHeader() {
             </div>
           </div>
 
-          {/* Mobile menu */}
+          {/* Mobile */}
           <div className="md:hidden pb-4">
             <nav className="pt-1">
               <ul className="flex items-center gap-6 overflow-x-auto no-scrollbar">
@@ -309,7 +297,9 @@ export default function SiteHeader() {
                   autoComplete="off"
                 />
                 {loading ? (
-                  <span className="text-[11px] tracking-[0.3em] text-white/55">…</span>
+                  <span className="text-[11px] tracking-[0.3em] text-white/55">
+                    …
+                  </span>
                 ) : null}
               </div>
 
@@ -347,4 +337,3 @@ export default function SiteHeader() {
     </header>
   );
 }
-
