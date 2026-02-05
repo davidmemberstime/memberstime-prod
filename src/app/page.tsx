@@ -25,16 +25,17 @@ export default function HomePage() {
         */}
         <div className="w-full max-w-5xl px-6 pt-[14vh] text-center">
           {/* Logo */}
-          <div className="mx-auto mb-6 w-[220px]">
-            <Image
-              src="/memberstime-logo.png"
-              alt="Members Time"
-              width={440}
-              height={200}
-              className="w-full h-auto"
-              priority
-            />
-          </div>
+         <div className="mx-auto mb-6 w-[340px] md:w-[380px]">
+  <Image
+    src="/memberstime-logo.png"
+    alt="Members Time"
+    width={760}
+    height={340}
+    className="w-full h-auto"
+    priority
+  />
+</div>
+
 
           {/* Headline */}
           <h1 className="font-serif text-[clamp(2.2rem,5vw,3.5rem)] leading-tight text-white">
@@ -76,3 +77,4 @@ export default function HomePage() {
     </main>
   );
 }
+
