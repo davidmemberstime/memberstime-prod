@@ -3,81 +3,76 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen bg-[#041b14] text-white overflow-hidden">
-      {/* Hero background */}
-      <div className="absolute inset-0">
-        <Image
-          src="/home-hero.jpg"
-          alt="Members Time — hosted golf experiences at great private clubs"
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
+    <main className="relative h-[100svh] w-full overflow-hidden">
+      {/* Background image */}
+      <Image
+        src="/home-hero.jpg"
+        alt="Members Time golf course"
+        fill
+        priority
+        className="object-cover"
+      />
 
-        {/* Very light overlay only */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#041b14]/20 via-transparent to-[#041b14]/30" />
-      </div>
+      {/* Soft dark overlay (already tuned, do not darken further) */}
+      <div className="absolute inset-0 bg-black/25" />
 
-      {/* Content */}
-      <section className="relative z-10">
-        {/* Key change: less top padding, tighter vertical rhythm */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-[90px] pb-[70px] text-center">
-          {/* Raised hero logo */}
-          <div className="mx-auto mb-8 flex justify-center">
-            <div
-              className="
-                relative
-                h-[240px] w-[600px]
-                sm:h-[270px] sm:w-[680px]
-                md:h-[300px] md:w-[760px]
-              "
-            >
-              <Image
-                src="/memberstime-logo.png"
-                alt="Members Time"
-                fill
-                priority
-                className="object-contain"
-                sizes="760px"
-              />
-            </div>
+      {/* Hero content */}
+      <div className="relative z-10 h-full flex items-start justify-center">
+        {/* 
+          THIS IS THE IMPORTANT PART:
+          - items-start instead of items-center
+          - padding-top to lift content upward
+        */}
+        <div className="w-full max-w-5xl px-6 pt-[14vh] text-center">
+          {/* Logo */}
+          <div className="mx-auto mb-6 w-[220px]">
+            <Image
+              src="/memberstime-logo.png"
+              alt="Members Time"
+              width={440}
+              height={200}
+              className="w-full h-auto"
+              priority
+            />
           </div>
 
-          {/* Raised headline */}
-          <h1 className="font-serif text-[34px] sm:text-[46px] md:text-[56px] leading-tight tracking-wide">
+          {/* Headline */}
+          <h1 className="font-serif text-[clamp(2.2rem,5vw,3.5rem)] leading-tight text-white">
             A hosted golf experience
-            <span className="block">at the world’s great private clubs</span>
+            <br />
+            at the world’s great private clubs
           </h1>
 
-          <p className="mx-auto mt-4 max-w-2xl text-[14px] sm:text-[15px] leading-relaxed text-white/90 tracking-wide">
-            Play top-rated courses as an invited guest — accompanied by trusted members at exceptional private clubs.
+          {/* Subtext */}
+          <p className="mt-4 text-sm text-white/80 max-w-2xl mx-auto">
+            Play top-rated courses as an invited guest — accompanied by trusted
+            members at exceptional private clubs.
           </p>
 
-          {/* Buttons */}
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          {/* CTA buttons */}
+          <div className="mt-10 flex items-center justify-center gap-4">
             <Link
-              href="/join?type=member"
-              className="inline-flex h-[46px] w-[230px] items-center justify-center border border-white/50 bg-white/15 px-6 text-[12px] uppercase tracking-[0.24em] text-white backdrop-blur-sm transition hover:bg-white/20"
+              href="/auth/sign-up?type=member"
+              className="px-8 py-3 text-xs uppercase tracking-[0.25em] border border-white/60 text-white hover:bg-white/10 transition"
             >
               I’m a Club Member
             </Link>
 
             <Link
-              href="/join?type=guest"
-              className="inline-flex h-[46px] w-[230px] items-center justify-center border border-[#d8b35a]/90 bg-[#d8b35a] px-6 text-[12px] uppercase tracking-[0.24em] text-[#041b14] transition hover:bg-[#e2c06d]"
+              href="/auth/sign-up?type=guest"
+              className="px-8 py-3 text-xs uppercase tracking-[0.25em] bg-[#d8b35a] text-[#041b14] hover:bg-[#e2c06d] transition"
             >
               I’m a Guest
             </Link>
           </div>
 
-          {/* Footer line — now guaranteed above the fold */}
-          <div className="mt-10 text-[11px] uppercase tracking-[0.24em] text-white/75">
-            By invitation <span className="mx-2">•</span> For verified members & guests
-            <span className="mx-2">•</span> In line with club culture
-          </div>
+          {/* Footer line */}
+          <p className="mt-10 text-[10px] uppercase tracking-[0.35em] text-white/60">
+            By invitation &nbsp;•&nbsp; For verified members & guests &nbsp;•&nbsp;
+            In line with club culture
+          </p>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
