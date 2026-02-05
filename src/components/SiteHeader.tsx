@@ -152,16 +152,17 @@ export default function SiteHeader() {
             {/* Header-only logo */}
             <div className="flex items-center shrink-0">
               <Link href="/" aria-label="Members Time home" className="flex items-center">
-                <div className="relative h-[44px] w-[220px] translate-y-[1px]">
-                  <Image
-                    src="/memberstime-headerlogo.png"
-                    alt="Members Time"
-                    fill
-                    priority
-                    className="object-contain object-left"
-                    sizes="220px"
-                  />
-                </div>
+               <div className="relative h-full w-[260px] flex items-center">
+  <Image
+    src="/memberstime-headerlogo.png"
+    alt="Members Time"
+    fill
+    priority
+    className="object-contain object-left"
+    sizes="260px"
+  />
+</div>
+
               </Link>
             </div>
 
@@ -346,3 +347,4 @@ export default function SiteHeader() {
     </header>
   );
 }
+
