@@ -142,11 +142,10 @@ export default function SiteHeader() {
     pathname === href || pathname?.startsWith(href + "/");
 
   return (
-    <header className="sticky top-0 z-50">
-      <div className="border-b border-white/10 bg-[#041b14]/85 backdrop-blur-xl supports-[backdrop-filter]:bg-[#041b14]/70">
+    <header className="sticky top-0 z-[9999]">
+      <div className="pointer-events-auto border-b border-white/10 bg-[#041b14]/85 backdrop-blur-xl supports-[backdrop-filter]:bg-[#041b14]/70">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="h-[74px] flex items-center justify-between gap-6">
-            {/* Header-only logo (FIXED: explicit height so Image fill works) */}
             <div className="flex items-center shrink-0">
               <Link href="/" aria-label="Members Time home" className="block">
                 <div className="relative h-[74px] w-[280px]">
@@ -162,7 +161,6 @@ export default function SiteHeader() {
               </Link>
             </div>
 
-            {/* Menu */}
             <nav className="hidden md:flex flex-1 justify-center">
               <ul className="flex items-center gap-10">
                 {nav.map((item) => {
@@ -190,9 +188,7 @@ export default function SiteHeader() {
               </ul>
             </nav>
 
-            {/* Right side */}
             <div className="flex items-center justify-end gap-4 shrink-0">
-              {/* Search */}
               <div
                 ref={desktopWrapRef}
                 className="relative hidden sm:block w-[240px] lg:w-[280px]"
@@ -256,7 +252,6 @@ export default function SiteHeader() {
             </div>
           </div>
 
-          {/* Mobile */}
           <div className="md:hidden pb-4">
             <nav className="pt-1">
               <ul className="flex items-center gap-6 overflow-x-auto no-scrollbar">
