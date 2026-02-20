@@ -1,20 +1,12 @@
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function BrowseLayout({
+export default function BrowseLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data?.user) {
-    redirect("/auth/sign-in");
-  }
-
+  // Browse is PUBLIC (no auth redirect).
+  // Keep auth protection for other routes (e.g. /search, /clubs/[id]) in their own layouts.
   return <>{children}</>;
 }
