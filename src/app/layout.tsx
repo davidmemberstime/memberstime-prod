@@ -1,5 +1,4 @@
 import "./globals.css";
-import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = {
   title: "Members Time",
