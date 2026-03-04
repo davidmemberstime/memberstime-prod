@@ -36,7 +36,7 @@ export default async function BrowsePage() {
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-[#041b14]" />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-32 text-center">
+        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-24 text-center">
 
           <h1 className="text-5xl font-semibold tracking-tight">
             Browse clubs
@@ -70,7 +70,7 @@ export default async function BrowsePage() {
 
       {/* CLUB GRID */}
 
-      <section className="mx-auto max-w-7xl px-6 py-14">
+      <section className="mx-auto max-w-7xl px-6 py-8">
 
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
 
@@ -142,3 +142,4 @@ export default async function BrowsePage() {
     </main>
   );
 }
+
