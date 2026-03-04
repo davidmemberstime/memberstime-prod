@@ -2,35 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export default function SiteHeader() {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
-    <header
-      className={cx(
-        "sticky top-0 z-50 transition-all duration-300 border-b border-white/10",
-        scrolled
-          ? "bg-[#041b14]/70 backdrop-blur-md"
-          : "bg-[#041b14]/90 backdrop-blur-xl"
-      )}
-    >
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#041b14]/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-
         {/* Logo */}
         <Link href="/" className="relative block h-[64px] w-[260px]">
           <Image
@@ -60,6 +36,10 @@ export default function SiteHeader() {
           <Link href="/how-it-works" className="hover:text-white transition-colors">
             How It Works
           </Link>
+
+          <Link href="/trust" className="hover:text-white transition-colors">
+            Trust
+          </Link>
         </nav>
 
         {/* Right side */}
@@ -79,17 +59,17 @@ export default function SiteHeader() {
           <Link href="/browse" className="hover:text-white">
             Browse Clubs
           </Link>
-
           <Link href="/for-guests" className="hover:text-white">
             For Guests
           </Link>
-
           <Link href="/for-members" className="hover:text-white">
             For Members
           </Link>
-
           <Link href="/how-it-works" className="hover:text-white">
             How It Works
+          </Link>
+          <Link href="/trust" className="hover:text-white">
+            Trust
           </Link>
         </div>
       </div>
