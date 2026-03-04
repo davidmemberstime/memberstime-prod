@@ -1,59 +1,119 @@
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
+"use client"
 
-type Club = {
-  id: string;
-  name: string;
-  region: string;
-  country: string;
-  tier: string;
-  clubhouse_contribution_gbp: number;
-};
+import { useEffect, useMemo, useState } from "react"
+import { supabase } from "@/lib/supabase/client"
 
-export default async function BrowsePage() {
+type ClubRow = {
+  id: string
+  name: string
+  region: string | null
+  country: string | null
+  tier: "Curated" | "Prestigious"
+  guests_max: 1 | 2
+  clubhouse_contribution_gbp: number
+  hosts_count: number
+}
 
-  const supabase = createClient();
+function formatLocation(region: string | null, country: string | null) {
+  const r = (region || "").trim()
+  const c = (country || "").trim()
+  if (r && c) return `${r}, ${c}`
+  return r || c || ""
+}
 
-  const { data: clubs } = await supabase
-    .from("clubs")
-    .select("id,name,region,country,tier,clubhouse_contribution_gbp")
-    .order("name");
+export default function BrowsePage() {
+  const [clubs, setClubs] = useState<ClubRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
+
+  const [query, setQuery] = useState("")
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+
+      const { data, error } = await supabase
+        .from("club_directory")
+        .select(
+          "id,name,region,country,tier,guests_max,clubhouse_contribution_gbp,hosts_count"
+        )
+        .order("hosts_count", { ascending: false })
+
+      if (error) setErr(error.message)
+      else setClubs((data as ClubRow[]) || [])
+
+      setLoading(false)
+    }
+
+    load()
+  }, [])
+
+  const suggestions = useMemo(() => {
+    if (!query) return []
+    return clubs
+      .filter((c) =>
+        c.name.toLowerCase().includes(query.toLowerCase())
+      )
+      .slice(0, 6)
+  }, [query, clubs])
 
   return (
-    <main className="min-h-screen bg-[#041b14] text-white">
+    <main className="min-h-screen bg-[#0b221b] text-white">
 
       {/* HERO */}
-      <section className="relative h-[420px] w-full overflow-hidden">
+      <div
+        className="relative h-[340px] w-full flex items-center justify-center"
+        style={{
+          backgroundImage: "url('/golf-hero.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        <div className="absolute inset-0 bg-black/40" />
 
-        <Image
-          src="/home-hero.jpg"
-          alt="Golf course"
-          fill
-          priority
-          className="object-cover brightness-[0.65]"
-        />
+        <div className="relative text-center">
 
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-[#041b14]" />
-
-        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-24 text-center">
-
-          <h1 className="text-5xl font-semibold tracking-tight">
-            Browse clubs
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+            Browse Clubs
           </h1>
 
-          <p className="mt-4 text-white/70 text-lg">
-            A curated UK list of verified member hosts at prestigious golf clubs.
-          </p>
-
           {/* SEARCH BAR */}
+          <div className="mt-6 flex justify-center gap-3">
 
-          <div className="mt-8 flex justify-center gap-3">
+            {/* AUTOCOMPLETE */}
+            <div className="relative w-[340px]">
 
-            <input
-              placeholder="Search clubs"
-              className="w-[320px] rounded-xl border border-white/20 bg-black/40 px-4 py-3 text-sm backdrop-blur"
-            />
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value)
+                  setIsOpen(true)
+                }}
+                placeholder="Search clubs"
+                className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-3 text-sm backdrop-blur"
+              />
+
+              {isOpen && suggestions.length > 0 && (
+                <div className="absolute top-full mt-2 w-full rounded-xl bg-[#0b2a1f] border border-white/10 shadow-lg">
+
+                  {suggestions.map((club) => (
+                    <button
+                      key={club.id}
+                      onClick={() => {
+                        setQuery(club.name)
+                        setIsOpen(false)
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm hover:bg-white/10"
+                    >
+                      {club.name}
+                    </button>
+                  ))}
+
+                </div>
+              )}
+
+            </div>
 
             <button className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10">
               All locations
@@ -65,81 +125,75 @@ export default async function BrowsePage() {
 
           </div>
         </div>
-      </section>
+      </div>
 
+      {/* CLUB LIST */}
+      <div className="mx-auto max-w-7xl px-6 py-10">
 
-      {/* CLUB GRID */}
+        {loading && (
+          <p className="text-white/70">Loading clubs…</p>
+        )}
 
-      <section className="mx-auto max-w-7xl px-6 py-8">
+        {err && (
+          <p className="text-red-400">{err}</p>
+        )}
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
-          {clubs?.map((club) => (
+          {clubs.map((c) => {
+            const location = formatLocation(c.region, c.country)
 
-            <Link
-              key={club.id}
-              href={`/clubs/${club.id}`}
-              className="group relative rounded-2xl overflow-hidden border border-white/10 bg-[#0c2d22]"
-            >
-
-              {/* IMAGE */}
-              <div className="relative h-[160px] w-full">
-
-                <Image
-                  src="/home-hero.jpg"
-                  alt={club.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition duration-500"
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-
-                <div className="absolute top-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs">
-                  {club.tier}
+            return (
+              <div
+                key={c.id}
+                className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 hover:bg-white/10 transition"
+              >
+                <div className="text-lg font-semibold">
+                  {c.name}
                 </div>
 
-              </div>
-
-              {/* CONTENT */}
-
-              <div className="p-4">
-
-                <h3 className="text-lg font-semibold">
-                  {club.name}
-                </h3>
-
-                <p className="text-white/60 text-sm">
-                  {club.region}, {club.country}
-                </p>
+                <div className="mt-1 text-sm text-white/70">
+                  {location}
+                </div>
 
                 <div className="mt-4 flex items-center justify-between text-sm">
 
                   <div>
-                    <p className="text-white/50 text-xs">
-                      Clubhouse contribution
-                    </p>
-
-                    <p className="text-amber-400 font-semibold">
-                      £{club.clubhouse_contribution_gbp}
-                    </p>
+                    <div className="text-white/60 text-xs">
+                      Hosts
+                    </div>
+                    <div className="font-semibold">
+                      {c.hosts_count}
+                    </div>
                   </div>
 
-                  <span className="rounded-lg bg-amber-500 px-3 py-1 text-xs text-black font-medium">
-                    View hosts
-                  </span>
+                  <div>
+                    <div className="text-white/60 text-xs">
+                      Contribution
+                    </div>
+                    <div className="font-semibold">
+                      £{c.clubhouse_contribution_gbp}
+                    </div>
+                  </div>
 
                 </div>
+
+                <a
+                  href={`/search?clubId=${encodeURIComponent(
+                    c.id
+                  )}&clubName=${encodeURIComponent(c.name)}`}
+                  className="mt-5 block text-center rounded-xl bg-[#d8b35a] text-[#041b14] px-4 py-2 text-sm font-semibold hover:brightness-110"
+                >
+                  View Hosts
+                </a>
               </div>
-
-            </Link>
-
-          ))}
+            )
+          })}
 
         </div>
 
-      </section>
+      </div>
 
     </main>
-  );
+  )
 }
-
