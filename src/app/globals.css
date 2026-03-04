@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base theme */
 :root {
   color-scheme: dark;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base body styling */
+body {
+  @apply bg-[#0b221b] text-white antialiased;
+}
+
+/* Improve font rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Nice selection highlight */
+::selection {
+  background: #c58a3a;
+  color: #041b14;
 }
