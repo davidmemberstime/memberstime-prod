@@ -24,13 +24,13 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col items-center justify-center px-6 text-center">
 
           {/* Centered Logo */}
-          <div className="flex justify-center mb-8">
-            <img
-              src="/memberstime-headerlogo.png"
-              alt="Members Time"
-              className="h-24 md:h-28 w-auto"
-            />
-          </div>
+    <div className="flex justify-center mb-8">
+  <img
+    src="/memberstime-headerlogo.png"
+    alt="Members Time"
+    className="h-24 md:h-28 w-auto scale-200"
+  />
+</div>
 
           {/* Headline */}
           <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
@@ -108,3 +108,4 @@ export default function HomePage() {
     </main>
   );
 }
+
