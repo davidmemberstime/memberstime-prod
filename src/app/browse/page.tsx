@@ -1,139 +1,144 @@
-"use client";
+import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
-
-type ClubRow = {
+type Club = {
   id: string;
   name: string;
-  region: string | null;
-  country: string | null;
-  tier: "Curated" | "Prestigious";
-  guests_max: 1 | 2;
+  region: string;
+  country: string;
+  tier: string;
   clubhouse_contribution_gbp: number;
-  hosts_count: number;
 };
 
-function formatLocation(region: string | null, country: string | null) {
-  const r = (region || "").trim();
-  const c = (country || "").trim();
-  if (r && c) return `${r}, ${c}`;
-  return r || c || "";
-}
+export default async function BrowsePage() {
 
-export default function BrowsePage() {
-  const [clubs, setClubs] = useState<ClubRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const supabase = createClient();
 
-  useEffect(() => {
-    let alive = true;
-
-    async function load() {
-      setLoading(true);
-      setErr(null);
-
-      const { data, error } = await supabase
-        .from("club_directory")
-        .select(
-          "id,name,region,country,tier,guests_max,clubhouse_contribution_gbp,hosts_count"
-        )
-        .order("hosts_count", { ascending: false })
-        .order("tier", { ascending: false })
-        .order("name", { ascending: true });
-
-      if (!alive) return;
-
-      if (error) {
-        setErr(error.message);
-        setClubs([]);
-      } else {
-        setClubs((data as ClubRow[]) || []);
-      }
-
-      setLoading(false);
-    }
-
-    load();
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const { data: clubs } = await supabase
+    .from("clubs")
+    .select("id,name,region,country,tier,clubhouse_contribution_gbp")
+    .order("name");
 
   return (
-    <main className="min-h-screen bg-[#0b221b] text-white">
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <h1 className="text-3xl font-semibold tracking-tight">Browse clubs</h1>
-        <p className="mt-2 max-w-2xl text-white/70">
-          A curated UK list. See how many verified member hosts are available at
-          each club.
-        </p>
+    <main className="min-h-screen bg-[#041b14] text-white">
 
-        {loading && <p className="mt-8 text-white/70">Loading clubs…</p>}
-        {err && <p className="mt-8 text-red-300">{err}</p>}
+      {/* HERO */}
+      <section className="relative h-[420px] w-full overflow-hidden">
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {clubs.map((c) => {
-            const location = formatLocation(c.region, c.country);
+        <Image
+          src="/home-hero.jpg"
+          alt="Golf course"
+          fill
+          priority
+          className="object-cover brightness-[0.65]"
+        />
 
-            return (
-              <div
-                key={c.id}
-                className="rounded-2xl border border-white/10 bg-white/5 p-6"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="truncate text-lg font-semibold">
-                      {c.name}
-                    </div>
-                    <div className="mt-1 text-sm text-white/70">
-                      {location || "—"}
-                    </div>
-                  </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-[#041b14]" />
 
-                  <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
-                    {c.tier}
-                  </span>
+        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-32 text-center">
+
+          <h1 className="text-5xl font-semibold tracking-tight">
+            Browse clubs
+          </h1>
+
+          <p className="mt-4 text-white/70 text-lg">
+            A curated UK list of verified member hosts at prestigious golf clubs.
+          </p>
+
+          {/* SEARCH BAR */}
+
+          <div className="mt-8 flex justify-center gap-3">
+
+            <input
+              placeholder="Search clubs"
+              className="w-[320px] rounded-xl border border-white/20 bg-black/40 px-4 py-3 text-sm backdrop-blur"
+            />
+
+            <button className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10">
+              All locations
+            </button>
+
+            <button className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10">
+              Sort by Recommended
+            </button>
+
+          </div>
+        </div>
+      </section>
+
+
+      {/* CLUB GRID */}
+
+      <section className="mx-auto max-w-7xl px-6 py-14">
+
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+
+          {clubs?.map((club) => (
+
+            <Link
+              key={club.id}
+              href={`/clubs/${club.id}`}
+              className="group relative rounded-2xl overflow-hidden border border-white/10 bg-[#0c2d22]"
+            >
+
+              {/* IMAGE */}
+              <div className="relative h-[160px] w-full">
+
+                <Image
+                  src="/home-hero.jpg"
+                  alt={club.name}
+                  fill
+                  className="object-cover group-hover:scale-105 transition duration-500"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+
+                <div className="absolute top-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs">
+                  {club.tier}
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                    <div className="text-xs text-white/70">
-                      Hosts on platform
-                    </div>
-                    <div className="text-lg font-semibold">{c.hosts_count}</div>
-                  </div>
+              </div>
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                    <div className="text-xs text-white/70">
+              {/* CONTENT */}
+
+              <div className="p-4">
+
+                <h3 className="text-lg font-semibold">
+                  {club.name}
+                </h3>
+
+                <p className="text-white/60 text-sm">
+                  {club.region}, {club.country}
+                </p>
+
+                <div className="mt-4 flex items-center justify-between text-sm">
+
+                  <div>
+                    <p className="text-white/50 text-xs">
                       Clubhouse contribution
-                    </div>
-                    <div className="text-lg font-semibold">
-                      £
-                      {Number(c.clubhouse_contribution_gbp || 0).toLocaleString(
-                        "en-GB"
-                      )}
-                    </div>
-                  </div>
-                </div>
+                    </p>
 
-                <div className="mt-5">
-                  <a
-                    href={`/search?clubId=${encodeURIComponent(
-                      c.id
-                    )}&clubName=${encodeURIComponent(c.name)}`}
-                    className="inline-flex rounded-xl bg-[#c58a3a] px-4 py-2 text-sm font-semibold text-[#0b2a1f] hover:brightness-110"
-                  >
+                    <p className="text-amber-400 font-semibold">
+                      £{club.clubhouse_contribution_gbp}
+                    </p>
+                  </div>
+
+                  <span className="rounded-lg bg-amber-500 px-3 py-1 text-xs text-black font-medium">
                     View hosts
-                  </a>
+                  </span>
+
                 </div>
               </div>
-            );
-          })}
+
+            </Link>
+
+          ))}
+
         </div>
-      </div>
+
+      </section>
+
     </main>
   );
 }
-
-
