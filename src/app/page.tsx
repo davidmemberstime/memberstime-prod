@@ -3,107 +3,108 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="min-h-[calc(100vh-72px)] bg-[#0b2a1f] text-white">
-      <section className="relative overflow-hidden">
+    <main className="relative text-white">
 
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <Image
-            src="/home-hero.jpg"
-            alt="Members Time — private golf hosted experiences"
-            fill
-            priority
-            className="object-cover"
-          />
+      {/* HERO */}
+      <section className="relative h-[80vh] min-h-[620px] w-full overflow-hidden">
 
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#041b14]/30 via-[#041b14]/55 to-[#0b2a1f]" />
-        </div>
+        {/* Background Image */}
+        <Image
+          src="/home-hero.jpg"
+          alt="Golf course"
+          fill
+          priority
+          className="object-cover brightness-[1.15]"
+        />
 
-        {/* Content */}
-        <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-20">
+        {/* Softer Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#041b14]/55 via-[#041b14]/45 to-[#041b14]/70" />
 
-          {/* BIG HERO LOGO */}
-          <div className="mb-10">
-            <Image
-              src="/memberstime-logo.png"
+        {/* Hero Content */}
+        <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col items-center justify-center px-6 text-center">
+
+          {/* Centered Logo */}
+          <div className="flex justify-center mb-8">
+            <img
+              src="/memberstime-headerlogo.png"
               alt="Members Time"
-              width={320}
-              height={120}
-              priority
-              className="object-contain"
+              className="h-24 md:h-28 w-auto"
             />
           </div>
 
           {/* Headline */}
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
+          <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
             A hosted golf experience,
-            <span className="text-white/90"> delivered with respect</span>
+            delivered with respect
           </h1>
 
-          {/* Subcopy */}
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/75 md:text-lg">
-            Members Time connects verified guests with verified members of
-            private clubs who choose to host during members’ times — aligned with
-            each club’s rules, culture and standards.
+          {/* Subtext */}
+          <p className="mt-6 max-w-2xl text-white/80 text-lg">
+            Members Time connects verified guests with verified members of private clubs
+            who choose to host during members’ times — aligned with each club’s rules,
+            culture and standards.
           </p>
 
-          {/* CTAs */}
-          <div className="mt-10 flex flex-wrap gap-4">
+          {/* Buttons */}
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+
             <Link
               href="/browse"
-              className="inline-flex items-center rounded-full bg-[#d8b35a] px-6 py-3 text-sm font-semibold text-[#041b14] hover:brightness-110"
+              className="rounded-full bg-[#d4af37] px-6 py-3 text-black font-semibold hover:brightness-110 transition"
             >
               Browse clubs
             </Link>
 
             <Link
               href="/for-guests"
-              className="inline-flex items-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold hover:bg-white/10"
+              className="rounded-full border border-white/30 px-6 py-3 hover:bg-white/10 transition"
             >
-              I'm a guest
+              I’m a guest
             </Link>
 
             <Link
               href="/for-members"
-              className="inline-flex items-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold hover:bg-white/10"
+              className="rounded-full border border-white/30 px-6 py-3 hover:bg-white/10 transition"
             >
-              I'm a club member
+              I’m a club member
             </Link>
+
           </div>
-
-          {/* Trust cards */}
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/60">
-                For clubs
-              </div>
-              <p className="mt-3 text-sm text-white/80">
-                Protected standards, preserved culture, and incremental clubhouse value.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/60">
-                For members
-              </div>
-              <p className="mt-3 text-sm text-white/80">
-                Join free. Host optionally. Full control and responsibility over your guests.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/60">
-                For guests
-              </div>
-              <p className="mt-3 text-sm text-white/80">
-                Access through trust — verified handicap, identity checks where needed.
-              </p>
-            </div>
-          </div>
-
         </div>
       </section>
+
+      {/* INFO CARDS */}
+      <section className="mx-auto max-w-6xl px-6 py-16 grid gap-6 md:grid-cols-3">
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
+          <h3 className="text-sm uppercase tracking-[0.2em] text-white/60">
+            For clubs
+          </h3>
+          <p className="mt-3 text-white/80">
+            Protected standards, preserved culture, and incremental clubhouse value.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
+          <h3 className="text-sm uppercase tracking-[0.2em] text-white/60">
+            For members
+          </h3>
+          <p className="mt-3 text-white/80">
+            Join free. Host optionally. Full control and responsibility over your guests.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
+          <h3 className="text-sm uppercase tracking-[0.2em] text-white/60">
+            For guests
+          </h3>
+          <p className="mt-3 text-white/80">
+            Access through trust — verified handicap, identity checks where needed.
+          </p>
+        </div>
+
+      </section>
+
     </main>
   );
 }
