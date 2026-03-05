@@ -18,11 +18,10 @@ export default function RequestRoundModal({
   const router = useRouter();
   const [requestedDate, setRequestedDate] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const minDate = useMemo(() => {
-    // earliest is tomorrow (stops “today” weirdness)
     const d = new Date();
     d.setDate(d.getDate() + 1);
     const yyyy = d.getFullYear();
@@ -47,8 +46,9 @@ export default function RequestRoundModal({
     }
 
     if (!user) {
-      // Send them to sign-in and come back
-      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      const next = encodeURIComponent(
+        window.location.pathname + window.location.search
+      );
       router.push(`/auth/sign-in?next=${next}`);
       setLoading(false);
       return;
@@ -72,17 +72,14 @@ export default function RequestRoundModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur"
-      role="dialog"
-      aria-modal="true"
-    >
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0b2a1f] p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">Request a round</h2>
             <p className="mt-1 text-sm text-white/70">
-              You’re requesting a hosted round with <span className="text-white/85 font-semibold">{hostName}</span>.
+              Requesting a hosted round with{" "}
+              <span className="font-semibold text-white/85">{hostName}</span>.
             </p>
           </div>
 
@@ -100,13 +97,15 @@ export default function RequestRoundModal({
               <label className="text-xs uppercase tracking-[0.18em] text-white/60">
                 Preferred date
               </label>
+
               <input
                 type="date"
                 value={requestedDate}
                 min={minDate}
                 onChange={(e) => setRequestedDate(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white placeholder:text-white/50 backdrop-blur outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10"
+                className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white backdrop-blur outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10"
               />
+
               <p className="mt-2 text-xs text-white/55">
                 This is a request — the host will confirm availability.
               </p>
@@ -134,9 +133,11 @@ export default function RequestRoundModal({
         ) : (
           <div className="mt-6">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-white/85 font-semibold">Request sent.</p>
+              <p className="text-sm font-semibold text-white/90">
+                Request sent.
+              </p>
               <p className="mt-1 text-sm text-white/70">
-                You can now browse more clubs or submit another request.
+                You’ll be notified when the host responds.
               </p>
             </div>
 
