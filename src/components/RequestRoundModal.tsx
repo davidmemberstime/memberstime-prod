@@ -8,15 +8,18 @@ export default function RequestRoundModal({
   clubId,
   hostProfileId,
   hostName,
+  guestsMax,
   onClose,
 }: {
   clubId: string;
   hostProfileId: string;
   hostName: string;
+  guestsMax: 1 | 2;
   onClose: () => void;
 }) {
   const router = useRouter();
   const [requestedDate, setRequestedDate] = useState("");
+  const [guestsCount, setGuestsCount] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -54,11 +57,15 @@ export default function RequestRoundModal({
       return;
     }
 
+    const safeGuestsCount: 1 | 2 =
+      guestsMax === 1 ? 1 : guestsCount === 2 ? 2 : 1;
+
     const { error } = await supabase.from("booking_requests").insert({
       guest_user_id: user.id,
       host_profile_id: hostProfileId,
       club_id: clubId,
       requested_date: requestedDate,
+      guests_count: safeGuestsCount,
     });
 
     if (error) {
@@ -93,22 +100,48 @@ export default function RequestRoundModal({
 
         {!success ? (
           <>
-            <div className="mt-5">
-              <label className="text-xs uppercase tracking-[0.18em] text-white/60">
-                Preferred date
-              </label>
+            <div className="mt-5 grid gap-4">
+              <div>
+                <label className="text-xs uppercase tracking-[0.18em] text-white/60">
+                  Preferred date
+                </label>
 
-              <input
-                type="date"
-                value={requestedDate}
-                min={minDate}
-                onChange={(e) => setRequestedDate(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white backdrop-blur outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10"
-              />
+                <input
+                  type="date"
+                  value={requestedDate}
+                  min={minDate}
+                  onChange={(e) => setRequestedDate(e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white backdrop-blur outline-none focus:border-white/30"
+                />
 
-              <p className="mt-2 text-xs text-white/55">
-                This is a request — the host will confirm availability.
-              </p>
+                <p className="mt-2 text-xs text-white/55">
+                  This is a request — the host will confirm availability.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs uppercase tracking-[0.18em] text-white/60">
+                  Guests
+                </label>
+
+                <select
+                  value={guestsCount}
+                  onChange={(e) =>
+                    setGuestsCount((Number(e.target.value) as 1 | 2) ?? 1)
+                  }
+                  disabled={guestsMax === 1}
+                  className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white backdrop-blur outline-none focus:border-white/30 disabled:opacity-60"
+                >
+                  <option value={1}>1 guest</option>
+                  {guestsMax === 2 && <option value={2}>2 guests</option>}
+                </select>
+
+                <p className="mt-2 text-xs text-white/55">
+                  This club allows up to{" "}
+                  <span className="text-white/75 font-semibold">{guestsMax}</span>{" "}
+                  guest{guestsMax === 2 ? "s" : ""}.
+                </p>
+              </div>
             </div>
 
             {err && <p className="mt-4 text-sm text-red-400">{err}</p>}
@@ -133,9 +166,7 @@ export default function RequestRoundModal({
         ) : (
           <div className="mt-6">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm font-semibold text-white/90">
-                Request sent.
-              </p>
+              <p className="text-sm font-semibold text-white/90">Request sent.</p>
               <p className="mt-1 text-sm text-white/70">
                 You’ll be notified when the host responds.
               </p>
