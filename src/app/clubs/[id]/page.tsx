@@ -60,7 +60,17 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
     )
     .eq("club_id", params.id);
 
-  const hosts: HostCard[] =
+  const hosts =
+  (hostRows ?? []).map((h: any) => ({
+    host_profile_id: h.id,
+    hosted_rounds: h.hosted_rounds ?? 0,
+    rehost_rate: h.rehost_rate ?? 0,
+    is_accepting: h.is_accepting ?? false,
+    hosting_fee_gbp: h.hosting_fee_gbp ?? 0,
+    guest_green_fee_gbp: h.guest_green_fee_gbp ?? 0,
+    handicap: h.profiles?.handicap_index ?? null,
+    full_name: h.profiles?.full_name ?? null
+  }));
     (hostRows || []).map((h: any) => ({
       host_profile_id: h.id,
       hosted_rounds: h.hosted_rounds ?? 0,
