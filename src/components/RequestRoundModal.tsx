@@ -65,8 +65,36 @@ export default function RequestRoundModal({
     return null;
   }
 
-  async function submit() {
-    setErr(null);
+ async function submit() {
+  try {
+    const res = await fetch("/api/checkout/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        clubId,
+        hostProfileId,
+        guestsCount,
+        preferredDate: preferred,
+        secondDate: preferred2,
+        thirdDate: preferred3,
+        notes,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Unable to start payment.");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong.");
+  }
+}
 
     const dateError = validateDates();
     if (dateError) {
