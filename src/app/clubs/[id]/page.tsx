@@ -2,7 +2,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
-import HostsClient, { HostCard } from "./HostsClient";
+import HostsClient from "./HostsClient";
 
 type ClubRow = {
   id: string;
