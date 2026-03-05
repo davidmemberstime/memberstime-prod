@@ -193,7 +193,7 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
             clubId={c.id}
             clubName={c.name}
             guestsMax={(c.guests_max === 2 ? 2 : 1) as 1 | 2}
-            hosts={hosts}
+            hosts={hosts as any}
           />
         </div>
       </div>
