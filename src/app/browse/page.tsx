@@ -4,15 +4,16 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
+type Tier = "Curated" | "Prestigious";
+
 type ClubRow = {
   id: string;
   name: string;
   region: string | null;
   country: string | null;
-  tier: "Curated" | "Prestigious";
+  tier: Tier | null;
   guests_max: number | null;
   clubhouse_contribution_gbp: number | null;
-  // Optional relation count (works if FK exists host_profiles.club_id -> clubs.id)
   host_profiles?: { count: number }[] | null;
 };
 
@@ -57,6 +58,17 @@ function chooseBestCandidate(candidates: ClubRow[]) {
   return [...candidates].sort((a, b) => score(b.name) - score(a.name))[0];
 }
 
+const COUNTRY_OPTIONS = [
+  "All locations",
+  "England",
+  "Scotland",
+  "Wales",
+  "Northern Ireland",
+  "Ireland",
+];
+
+type Mode = "recommended" | "all" | "curated";
+
 export default function BrowsePage() {
   const [clubs, setClubs] = useState<ClubRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,15 +77,20 @@ export default function BrowsePage() {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
-  const boxRef = useRef<HTMLDivElement | null>(null);
+  const [countryFilter, setCountryFilter] = useState<string>("All locations");
+  const [mode, setMode] = useState<Mode>("recommended"); // default: Prestigious
+  const [countryMenuOpen, setCountryMenuOpen] = useState(false);
+  const [modeMenuOpen, setModeMenuOpen] = useState(false);
+
+  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+  const countryBoxRef = useRef<HTMLDivElement | null>(null);
+  const modeBoxRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setErr(null);
 
-      // ✅ Use the same table as /clubs/[id]
-      // ✅ Pull optional host count if FK is set up
       const { data, error } = await supabase
         .from("clubs")
         .select(
@@ -99,10 +116,20 @@ export default function BrowsePage() {
     load();
   }, []);
 
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
-      if (!boxRef.current) return;
-      if (!boxRef.current.contains(e.target as Node)) setIsOpen(false);
+      const t = e.target as Node;
+
+      if (searchBoxRef.current && !searchBoxRef.current.contains(t)) {
+        setIsOpen(false);
+      }
+      if (countryBoxRef.current && !countryBoxRef.current.contains(t)) {
+        setCountryMenuOpen(false);
+      }
+      if (modeBoxRef.current && !modeBoxRef.current.contains(t)) {
+        setModeMenuOpen(false);
+      }
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
@@ -130,6 +157,44 @@ export default function BrowsePage() {
 
   const firstSuggestion = suggestions[0];
 
+  const filteredClubs = useMemo(() => {
+    let list = clubs;
+
+    // Mode filter
+    if (mode === "recommended") {
+      list = list.filter((c) => c.tier === "Prestigious");
+    } else if (mode === "curated") {
+      list = list.filter((c) => c.tier === "Curated");
+    }
+
+    // Country filter
+    if (countryFilter !== "All locations") {
+      const target = countryFilter.toLowerCase();
+      list = list.filter((c) => (c.country || "").toLowerCase() === target);
+    }
+
+    // Sort: recommended should feel alive => hosts desc then name
+    const hostCount = (c: ClubRow) => c.host_profiles?.[0]?.count ?? 0;
+
+    list = [...list].sort((a, b) => {
+      if (mode === "recommended") {
+        const ha = hostCount(a);
+        const hb = hostCount(b);
+        if (hb !== ha) return hb - ha;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return list;
+  }, [clubs, mode, countryFilter]);
+
+  const modeLabel =
+    mode === "recommended"
+      ? "Sort by Recommended"
+      : mode === "all"
+      ? "All clubs"
+      : "Curated only";
+
   return (
     <main className="min-h-screen bg-[#0b221b] text-white">
       {/* HERO */}
@@ -152,12 +217,14 @@ export default function BrowsePage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf clubs.
+              A curated UK list of verified member hosts at prestigious golf
+              clubs.
             </p>
 
-            {/* SEARCH ROW */}
+            {/* SEARCH + FILTER ROW */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <div ref={boxRef} className="relative w-[360px] max-w-full">
+              {/* Search */}
+              <div ref={searchBoxRef} className="relative w-[360px] max-w-full">
                 <input
                   value={query}
                   onChange={(e) => {
@@ -193,14 +260,102 @@ export default function BrowsePage() {
                 )}
               </div>
 
-              <button className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10">
-                All locations
-              </button>
+              {/* All locations dropdown */}
+              <div ref={countryBoxRef} className="relative">
+                <button
+                  onClick={() => {
+                    setCountryMenuOpen((v) => !v);
+                    setModeMenuOpen(false);
+                  }}
+                  className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
+                >
+                  {countryFilter}
+                </button>
 
-              <button className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10">
-                Sort by Recommended
-              </button>
+                {countryMenuOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-[220px] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
+                    {COUNTRY_OPTIONS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => {
+                          setCountryFilter(c);
+                          setCountryMenuOpen(false);
+                        }}
+                        className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                          c === countryFilter ? "bg-white/10" : ""
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Recommended dropdown */}
+              <div ref={modeBoxRef} className="relative">
+                <button
+                  onClick={() => {
+                    setModeMenuOpen((v) => !v);
+                    setCountryMenuOpen(false);
+                  }}
+                  className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
+                >
+                  {modeLabel}
+                </button>
+
+                {modeMenuOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
+                    <button
+                      onClick={() => {
+                        setMode("recommended");
+                        setModeMenuOpen(false);
+                      }}
+                      className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                        mode === "recommended" ? "bg-white/10" : ""
+                      }`}
+                    >
+                      Recommended (Prestigious)
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMode("all");
+                        setModeMenuOpen(false);
+                      }}
+                      className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                        mode === "all" ? "bg-white/10" : ""
+                      }`}
+                    >
+                      All clubs
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMode("curated");
+                        setModeMenuOpen(false);
+                      }}
+                      className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                        mode === "curated" ? "bg-white/10" : ""
+                      }`}
+                    >
+                      Curated only
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Small status line */}
+            <p className="mt-4 text-xs text-white/55">
+              Showing{" "}
+              <span className="text-white/80 font-semibold">
+                {filteredClubs.length}
+              </span>{" "}
+              clubs
+              {mode === "recommended" ? " (Prestigious)" : ""}
+              {countryFilter !== "All locations" ? ` in ${countryFilter}` : ""}.
+            </p>
           </div>
         </div>
       </section>
@@ -211,11 +366,9 @@ export default function BrowsePage() {
         {err && <p className="text-red-400">{err}</p>}
 
         <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
-          {clubs.map((c) => {
+          {filteredClubs.map((c) => {
             const location = formatLocation(c.region, c.country);
-
-            // If FK exists, Supabase returns [{ count: n }]. If not, this will be undefined.
-            const hostsAvailable = c.host_profiles?.[0]?.count ?? 0;
+            const hostsAvailable = c.host_profiles?.[0]?.count;
 
             return (
               <div
@@ -227,15 +380,18 @@ export default function BrowsePage() {
 
                 <div className="mt-4 space-y-2 text-sm">
                   <div className="text-white/80">
-                    👤 <span className="font-semibold">{hostsAvailable}</span>{" "}
+                    👤{" "}
+                    <span className="font-semibold">
+                      {typeof hostsAvailable === "number"
+                        ? hostsAvailable
+                        : "—"}
+                    </span>{" "}
                     hosts available
                   </div>
 
                   <div className="text-white/80">
-                    <span className="text-white/60 text-xs block">
-                      Clubhouse contribution
-                    </span>
-                    <span className="font-semibold">£20</span>
+                    <div className="text-white/60 text-xs">Contribution</div>
+                    <div className="font-semibold">£20</div>
                   </div>
                 </div>
 
