@@ -41,7 +41,7 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
       ? `https://${c.website}`
       : null;
 
-  // ✅ Load hosts for this club
+  // Load hosts for this club, including profile fields
   const { data: hostRows } = await supabase
     .from("host_profiles")
     .select(
@@ -143,65 +143,7 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
       <div className="mx-auto max-w-6xl px-6 -mt-10 pb-16">
         <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl overflow-hidden">
           <div className="p-6 md:p-8">
-            <div className="flex items-start gap-5">
-              {c.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={c.logo_url}
-                  alt={`${c.name} logo`}
-                  className="h-16 w-16 rounded-2xl border border-white/10 bg-white/5 object-contain p-2"
-                />
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-xs text-white/70">
-                  Logo
-                </div>
-              )}
-
-              <div className="min-w-0 flex-1">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">
-                      Guests allowed
-                    </div>
-                    <div className="mt-1 text-2xl font-semibold">
-                      {c.guests_max}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">
-                      Clubhouse contribution
-                    </div>
-                    <div className="mt-1 text-2xl font-semibold">£20</div>
-                    <div className="mt-1 text-xs text-white/55">
-                      Paid to the club on the day (goodwill).
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-white/60">
-                      Website
-                    </div>
-                    <div className="mt-2 text-sm text-white/80">
-                      {websiteHref ? (
-                        <a
-                          href={websiteHref}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#d8b35a] hover:underline"
-                        >
-                          {c.website}
-                        </a>
-                      ) : (
-                        <span className="text-white/60">Not added yet</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
                 <h2 className="text-sm font-semibold text-white/90">Address</h2>
                 <div className="mt-3 text-sm text-white/70">
@@ -215,30 +157,32 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                <h2 className="text-sm font-semibold text-white/90">
-                  Payment notes
-                </h2>
-                <div className="mt-3 text-sm text-white/70 space-y-2">
-                  <div>
-                    <span className="text-white/80 font-semibold">
-                      Booking fee
-                    </span>{" "}
-                    is paid online at request.
-                  </div>
-                  <div>
-                    <span className="text-white/80 font-semibold">
-                      On the day
-                    </span>{" "}
-                    guests pay host fee + green fee, and pay{" "}
-                    <span className="text-white/80 font-semibold">£20</span>{" "}
-                    clubhouse contribution to the club.
-                  </div>
+                <h2 className="text-sm font-semibold text-white/90">Website</h2>
+                <div className="mt-3 text-sm text-white/70">
+                  {websiteHref ? (
+                    <a
+                      href={websiteHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#d8b35a] hover:underline"
+                    >
+                      {c.website}
+                    </a>
+                  ) : (
+                    <span className="text-white/60">Not added yet</span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          <HostsClient clubId={c.id} clubName={c.name} hosts={hosts} />
+          {/* ✅ THIS IS THE BIT YOU COULDN’T FIND */}
+          <HostsClient
+            clubId={c.id}
+            clubName={c.name}
+            guestsMax={(c.guests_max === 2 ? 2 : 1) as 1 | 2}
+            hosts={hosts}
+          />
         </div>
       </div>
     </main>
