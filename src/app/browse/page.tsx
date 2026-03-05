@@ -22,6 +22,53 @@ function formatLocation(region: string | null, country: string | null) {
   return r || c || "";
 }
 
+/**
+ * Normalise club names so "Parkstone" and "Parkstone Golf Club" are treated as the same group.
+ * This is intentionally heuristic to suppress "area name" duplicates in autocomplete.
+ */
+function normaliseClubKey(name: string) {
+  return (
+    name
+      .toLowerCase()
+      .trim()
+      // remove punctuation & extra symbols
+      .replace(/&/g, " and ")
+      .replace(/['’]/g, "")
+      .replace(/[^a-z0-9\s]/g, " ")
+      // common golf suffixes / variants
+      .replace(/\bthe\b/g, " ")
+      .replace(/\bgolf\s*&\s*country\s*club\b/g, " ")
+      .replace(/\bgolf\s*and\s*country\s*club\b/g, " ")
+      .replace(/\bcountry\s*club\b/g, " ")
+      .replace(/\bgolf\s*club\b/g, " ")
+      .replace(/\bgolf\b/g, " ")
+      .replace(/\bg\.?\s*c\.?\b/g, " ") // GC / G.C.
+      // collapse spaces
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
+/**
+ * Pick the best display candidate among duplicates.
+ * Preference order:
+ * 1) Contains "golf club" / "golf" / "gc" (usually the official club entry vs area-only)
+ * 2) Longer name (more specific)
+ */
+function chooseBestCandidate(candidates: ClubRow[]) {
+  const score = (n: string) => {
+    const s = n.toLowerCase();
+    let pts = 0;
+    if (/\bgolf\s*club\b/.test(s)) pts += 50;
+    else if (/\bgolf\b/.test(s)) pts += 30;
+    if (/\bg\.?\s*c\.?\b/.test(s)) pts += 20;
+    pts += Math.min(n.length, 60); // slight preference for specificity
+    return pts;
+  };
+
+  return [...candidates].sort((a, b) => score(b.name) - score(a.name))[0];
+}
+
 export default function BrowsePage() {
   const [clubs, setClubs] = useState<ClubRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,9 +114,29 @@ export default function BrowsePage() {
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return clubs
-      .filter((c) => c.name.toLowerCase().includes(q))
-      .slice(0, 8);
+
+    // 1) find matches based on raw name includes
+    const matches = clubs.filter((c) => c.name.toLowerCase().includes(q));
+
+    // 2) group duplicates by normalised key (e.g. Parkstone == Parkstone Golf Club)
+    const groups = new Map<string, ClubRow[]>();
+    for (const m of matches) {
+      const key = normaliseClubKey(m.name) || m.name.toLowerCase();
+      const arr = groups.get(key);
+      if (arr) arr.push(m);
+      else groups.set(key, [m]);
+    }
+
+    // 3) pick best candidate per group + stable ordering
+    const deduped = Array.from(groups.values()).map(chooseBestCandidate);
+
+    // Keep your existing “recommended first” feel: hosts_count desc then name asc
+    deduped.sort((a, b) => {
+      if (b.hosts_count !== a.hosts_count) return b.hosts_count - a.hosts_count;
+      return a.name.localeCompare(b.name);
+    });
+
+    return deduped.slice(0, 8);
   }, [query, clubs]);
 
   const firstSuggestion = suggestions[0];
@@ -79,7 +146,6 @@ export default function BrowsePage() {
       {/* HERO */}
       <section className="relative w-full overflow-hidden border-b border-white/10">
         <div className="relative h-[340px] w-full">
-          {/* ✅ MUST exist at /public/home-hero.jpg */}
           <Image
             src="/home-hero.jpg"
             alt="Members Time"
@@ -98,7 +164,8 @@ export default function BrowsePage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf clubs.
+              A curated UK list of verified member hosts at prestigious golf
+              clubs.
             </p>
 
             {/* SEARCH ROW */}
@@ -124,7 +191,7 @@ export default function BrowsePage() {
                   className="w-full rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-sm backdrop-blur outline-none focus:border-white/40"
                 />
 
-                {/* ✅ Dropdown uses normal links so clicking ALWAYS works */}
+                {/* Dropdown: show ONLY club names (no town/region/country line) */}
                 {isOpen && suggestions.length > 0 && (
                   <div className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
                     {suggestions.map((club) => (
@@ -136,9 +203,6 @@ export default function BrowsePage() {
                         className="block w-full px-4 py-3 text-left hover:bg-white/10"
                       >
                         <div className="text-sm font-medium">{club.name}</div>
-                        <div className="text-xs text-white/55">
-                          {formatLocation(club.region, club.country)}
-                        </div>
                       </a>
                     ))}
                   </div>
@@ -157,7 +221,7 @@ export default function BrowsePage() {
         </div>
       </section>
 
-      {/* CLUB GRID (pulled up closer to hero) */}
+      {/* CLUB GRID */}
       <div className="mx-auto max-w-7xl px-6 -mt-10 pb-12">
         {loading && <p className="text-white/70">Loading clubs…</p>}
         {err && <p className="text-red-400">{err}</p>}
