@@ -54,7 +54,7 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
       guest_green_fee_gbp,
       profiles:profiles (
         full_name,
-        cdh_number
+        handicap_index
       )
     `
     )
@@ -78,7 +78,10 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
           ? null
           : Number(h.guest_green_fee_gbp),
       full_name: h.profiles?.full_name ?? null,
-      cdh_number: h.profiles?.cdh_number ?? null,
+      handicap_index:
+        h.profiles?.handicap_index === null || h.profiles?.handicap_index === undefined
+          ? null
+          : Number(h.profiles?.handicap_index),
     })) || [];
 
   return (
@@ -176,7 +179,6 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
             </div>
           </div>
 
-          {/* ✅ THIS IS THE BIT YOU COULDN’T FIND */}
           <HostsClient
             clubId={c.id}
             clubName={c.name}
