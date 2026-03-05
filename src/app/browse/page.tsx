@@ -10,9 +10,10 @@ type ClubRow = {
   region: string | null;
   country: string | null;
   tier: "Curated" | "Prestigious";
-  guests_max: 1 | 2;
-  clubhouse_contribution_gbp: number;
-  hosts_count: number;
+  guests_max: number | null;
+  clubhouse_contribution_gbp: number | null;
+  // Optional relation count (works if FK exists host_profiles.club_id -> clubs.id)
+  host_profiles?: { count: number }[] | null;
 };
 
 function formatLocation(region: string | null, country: string | null) {
@@ -22,39 +23,26 @@ function formatLocation(region: string | null, country: string | null) {
   return r || c || "";
 }
 
-/**
- * Normalise club names so "Parkstone" and "Parkstone Golf Club" are treated as the same group.
- * This is intentionally heuristic to suppress "area name" duplicates in autocomplete.
- */
 function normaliseClubKey(name: string) {
   return (
     name
       .toLowerCase()
       .trim()
-      // remove punctuation & extra symbols
       .replace(/&/g, " and ")
       .replace(/['’]/g, "")
       .replace(/[^a-z0-9\s]/g, " ")
-      // common golf suffixes / variants
       .replace(/\bthe\b/g, " ")
       .replace(/\bgolf\s*&\s*country\s*club\b/g, " ")
       .replace(/\bgolf\s*and\s*country\s*club\b/g, " ")
       .replace(/\bcountry\s*club\b/g, " ")
       .replace(/\bgolf\s*club\b/g, " ")
       .replace(/\bgolf\b/g, " ")
-      .replace(/\bg\.?\s*c\.?\b/g, " ") // GC / G.C.
-      // collapse spaces
+      .replace(/\bg\.?\s*c\.?\b/g, " ")
       .replace(/\s+/g, " ")
       .trim()
   );
 }
 
-/**
- * Pick the best display candidate among duplicates.
- * Preference order:
- * 1) Contains "golf club" / "golf" / "gc" (usually the official club entry vs area-only)
- * 2) Longer name (more specific)
- */
 function chooseBestCandidate(candidates: ClubRow[]) {
   const score = (n: string) => {
     const s = n.toLowerCase();
@@ -62,7 +50,7 @@ function chooseBestCandidate(candidates: ClubRow[]) {
     if (/\bgolf\s*club\b/.test(s)) pts += 50;
     else if (/\bgolf\b/.test(s)) pts += 30;
     if (/\bg\.?\s*c\.?\b/.test(s)) pts += 20;
-    pts += Math.min(n.length, 60); // slight preference for specificity
+    pts += Math.min(n.length, 60);
     return pts;
   };
 
@@ -84,12 +72,22 @@ export default function BrowsePage() {
       setLoading(true);
       setErr(null);
 
+      // ✅ Use the same table as /clubs/[id]
+      // ✅ Pull optional host count if FK is set up
       const { data, error } = await supabase
-        .from("club_directory")
+        .from("clubs")
         .select(
-          "id,name,region,country,tier,guests_max,clubhouse_contribution_gbp,hosts_count"
+          `
+          id,
+          name,
+          region,
+          country,
+          tier,
+          guests_max,
+          clubhouse_contribution_gbp,
+          host_profiles(count)
+        `
         )
-        .order("hosts_count", { ascending: false })
         .order("name", { ascending: true });
 
       if (error) setErr(error.message);
@@ -101,7 +99,6 @@ export default function BrowsePage() {
     load();
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
       if (!boxRef.current) return;
@@ -115,10 +112,8 @@ export default function BrowsePage() {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
-    // 1) find matches based on raw name includes
     const matches = clubs.filter((c) => c.name.toLowerCase().includes(q));
 
-    // 2) group duplicates by normalised key (e.g. Parkstone == Parkstone Golf Club)
     const groups = new Map<string, ClubRow[]>();
     for (const m of matches) {
       const key = normaliseClubKey(m.name) || m.name.toLowerCase();
@@ -127,14 +122,8 @@ export default function BrowsePage() {
       else groups.set(key, [m]);
     }
 
-    // 3) pick best candidate per group + stable ordering
     const deduped = Array.from(groups.values()).map(chooseBestCandidate);
-
-    // Keep your existing “recommended first” feel: hosts_count desc then name asc
-    deduped.sort((a, b) => {
-      if (b.hosts_count !== a.hosts_count) return b.hosts_count - a.hosts_count;
-      return a.name.localeCompare(b.name);
-    });
+    deduped.sort((a, b) => a.name.localeCompare(b.name));
 
     return deduped.slice(0, 8);
   }, [query, clubs]);
@@ -156,7 +145,6 @@ export default function BrowsePage() {
           <div className="absolute inset-0 bg-black/25 pointer-events-none" />
         </div>
 
-        {/* Content overlay */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="mx-auto w-full max-w-7xl px-6 text-center">
             <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
@@ -164,8 +152,7 @@ export default function BrowsePage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf
-              clubs.
+              A curated UK list of verified member hosts at prestigious golf clubs.
             </p>
 
             {/* SEARCH ROW */}
@@ -181,9 +168,9 @@ export default function BrowsePage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && firstSuggestion) {
                       e.preventDefault();
-                      window.location.href = `/search?clubId=${encodeURIComponent(
+                      window.location.href = `/clubs/${encodeURIComponent(
                         firstSuggestion.id
-                      )}&clubName=${encodeURIComponent(firstSuggestion.name)}`;
+                      )}`;
                     }
                     if (e.key === "Escape") setIsOpen(false);
                   }}
@@ -191,15 +178,12 @@ export default function BrowsePage() {
                   className="w-full rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-sm backdrop-blur outline-none focus:border-white/40"
                 />
 
-                {/* Dropdown: show ONLY club names (no town/region/country line) */}
                 {isOpen && suggestions.length > 0 && (
                   <div className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
                     {suggestions.map((club) => (
                       <a
                         key={club.id}
-                        href={`/search?clubId=${encodeURIComponent(
-                          club.id
-                        )}&clubName=${encodeURIComponent(club.name)}`}
+                        href={`/clubs/${encodeURIComponent(club.id)}`}
                         className="block w-full px-4 py-3 text-left hover:bg-white/10"
                       >
                         <div className="text-sm font-medium">{club.name}</div>
@@ -230,6 +214,9 @@ export default function BrowsePage() {
           {clubs.map((c) => {
             const location = formatLocation(c.region, c.country);
 
+            // If FK exists, Supabase returns [{ count: n }]. If not, this will be undefined.
+            const hostsAvailable = c.host_profiles?.[0]?.count ?? 0;
+
             return (
               <div
                 key={c.id}
@@ -238,27 +225,22 @@ export default function BrowsePage() {
                 <div className="text-lg font-semibold">{c.name}</div>
                 <div className="mt-1 text-sm text-white/70">{location}</div>
 
-                <div className="mt-4 flex items-center justify-between text-sm">
-                  <div>
-                    <div className="text-white/60 text-xs">Hosts</div>
-                    <div className="font-semibold">{c.hosts_count}</div>
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="text-white/80">
+                    👤 <span className="font-semibold">{hostsAvailable}</span>{" "}
+                    hosts available
                   </div>
 
-                  <div>
-                    <div className="text-white/60 text-xs">Contribution</div>
-                    <div className="font-semibold">
-                      £
-                      {Number(c.clubhouse_contribution_gbp || 0).toLocaleString(
-                        "en-GB"
-                      )}
-                    </div>
+                  <div className="text-white/80">
+                    <span className="text-white/60 text-xs block">
+                      Clubhouse contribution
+                    </span>
+                    <span className="font-semibold">£20</span>
                   </div>
                 </div>
 
                 <a
-                  href={`/search?clubId=${encodeURIComponent(
-                    c.id
-                  )}&clubName=${encodeURIComponent(c.name)}`}
+                  href={`/clubs/${encodeURIComponent(c.id)}`}
                   className="mt-5 block w-full text-center rounded-xl bg-[#d8b35a] px-4 py-2 text-sm font-semibold text-[#041b14] hover:brightness-110"
                 >
                   View hosts
