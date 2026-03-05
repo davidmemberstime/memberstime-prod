@@ -25,13 +25,21 @@ function gbp(n: number) {
   return `£${n.toLocaleString("en-GB")}`;
 }
 
+function firstName(fullName: string | null | undefined) {
+  const s = (fullName || "").trim();
+  if (!s) return null;
+  return s.split(/\s+/)[0] || null;
+}
+
 export default function HostsClient({
   clubId,
   clubName,
+  guestsMax,
   hosts,
 }: {
   clubId: string;
   clubName: string;
+  guestsMax: 1 | 2;
   hosts: HostCard[];
 }) {
   const [selected, setSelected] = useState<HostCard | null>(null);
@@ -65,10 +73,8 @@ export default function HostsClient({
 
       <div className="mt-3 text-xs text-white/55">
         <span className="font-semibold text-white/75">Payment on the day:</span>{" "}
-        Host fee + guest green fee + £20 clubhouse contribution to the club.{" "}
-        <span className="text-white/65">
-          Booking fee is paid online at request.
-        </span>
+        Host fee + guest green fee + £20 clubhouse contribution to the club. Booking
+        fee is paid online at request.
       </div>
 
       {acceptingHosts.length === 0 ? (
@@ -83,7 +89,7 @@ export default function HostsClient({
       ) : (
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {acceptingHosts.map((h) => {
-            const name = h.full_name?.trim() || "Member host";
+            const displayName = firstName(h.full_name) || "Member host";
 
             const hostingFee = h.hosting_fee_gbp ?? null;
             const greenFee = h.guest_green_fee_gbp ?? null;
@@ -99,7 +105,9 @@ export default function HostsClient({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-lg font-semibold truncate">{name}</div>
+                    <div className="text-lg font-semibold truncate">
+                      {displayName}
+                    </div>
                     <div className="mt-1 text-sm text-white/70">
                       {h.cdh_number ? `CDH ${h.cdh_number}` : "CDH not provided"}
                     </div>
@@ -171,7 +179,8 @@ export default function HostsClient({
         <RequestRoundModal
           clubId={clubId}
           hostProfileId={selected.host_profile_id}
-          hostName={selected.full_name?.trim() || "Member host"}
+          hostName={firstName(selected.full_name) || "Member host"}
+          guestsMax={guestsMax}
           onClose={() => setSelected(null)}
         />
       )}
