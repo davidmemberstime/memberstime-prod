@@ -1,4 +1,3 @@
-import SiteHeader from "@/components/SiteHeader";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -30,7 +29,7 @@ export default async function ClubPage({
 }) {
   const supabase = createClient();
 
-  // NOTE: You’re querying table "clubs" here. Leaving as-is to avoid breaking anything.
+  // NOTE: Keeping your table name ("clubs") exactly as-is to avoid breaking anything.
   const { data: club, error } = await supabase
     .from("clubs")
     .select(
@@ -52,8 +51,6 @@ export default async function ClubPage({
 
   return (
     <main className="min-h-screen bg-[#071e17] text-white">
-      <SiteHeader />
-
       {/* Premium hero */}
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="relative h-[260px] w-full">
@@ -181,7 +178,6 @@ export default async function ClubPage({
                 ← Back to browse
               </a>
 
-              {/* ✅ No loop: jump to hosts section on this page */}
               <a
                 href="#hosts"
                 className="inline-flex items-center justify-center rounded-xl bg-[#d8b35a] px-4 py-2 text-sm font-semibold text-[#041b14] hover:brightness-110"
@@ -191,7 +187,7 @@ export default async function ClubPage({
             </div>
           </div>
 
-          {/* Hosts section (placeholder until you share host table/schema) */}
+          {/* Hosts section placeholder */}
           <div
             id="hosts"
             className="border-t border-white/10 bg-black/20 p-6 md:p-8 scroll-mt-28"
@@ -219,9 +215,7 @@ export default async function ClubPage({
                 Hosts list not connected yet.
               </div>
               <div className="mt-2 text-xs text-white/55">
-                If you paste your Supabase hosts table name + columns (or the file
-                where hosts are currently rendered), I’ll wire this up with the same
-                premium card layout.
+                Send your Supabase host table name + columns and I’ll wire this up.
               </div>
             </div>
           </div>
