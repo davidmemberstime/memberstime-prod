@@ -11,7 +11,7 @@ export type HostCard = {
   hosting_fee_gbp: number | null;
   guest_green_fee_gbp: number | null;
   full_name: string | null;
-  cdh_number: string | null;
+  handicap_index: number | null;
 };
 
 function pct(val: number | null) {
@@ -29,6 +29,14 @@ function firstName(fullName: string | null | undefined) {
   const s = (fullName || "").trim();
   if (!s) return null;
   return s.split(/\s+/)[0] || null;
+}
+
+function handicapWhole(val: number | null) {
+  if (val === null || val === undefined) return null;
+  const n = Number(val);
+  if (Number.isNaN(n)) return null;
+  // whole number as requested
+  return Math.round(n);
 }
 
 export default function HostsClient({
@@ -90,6 +98,7 @@ export default function HostsClient({
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {acceptingHosts.map((h) => {
             const displayName = firstName(h.full_name) || "Member host";
+            const hcap = handicapWhole(h.handicap_index);
 
             const hostingFee = h.hosting_fee_gbp ?? null;
             const greenFee = h.guest_green_fee_gbp ?? null;
@@ -108,8 +117,9 @@ export default function HostsClient({
                     <div className="text-lg font-semibold truncate">
                       {displayName}
                     </div>
+
                     <div className="mt-1 text-sm text-white/70">
-                      {h.cdh_number ? `CDH ${h.cdh_number}` : "CDH not provided"}
+                      {hcap !== null ? `Handicap ${hcap}` : "Handicap not provided"}
                     </div>
                   </div>
 
