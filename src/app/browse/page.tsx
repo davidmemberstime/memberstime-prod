@@ -68,6 +68,8 @@ const COUNTRY_OPTIONS = [
   "Ireland",
 ];
 
+type MenuPos = { top: number; left: number; width: number } | null;
+
 export default function BrowsePage() {
   const [clubs, setClubs] = useState<ClubRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,12 +80,17 @@ export default function BrowsePage() {
 
   const [countryFilter, setCountryFilter] = useState<string>("All locations");
   const [mode, setMode] = useState<Mode>("recommended");
+
   const [countryMenuOpen, setCountryMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
 
+  const [countryMenuPos, setCountryMenuPos] = useState<MenuPos>(null);
+  const [modeMenuPos, setModeMenuPos] = useState<MenuPos>(null);
+
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
-  const countryBoxRef = useRef<HTMLDivElement | null>(null);
-  const modeBoxRef = useRef<HTMLDivElement | null>(null);
+
+  const countryBtnRef = useRef<HTMLButtonElement | null>(null);
+  const modeBtnRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -115,6 +122,7 @@ export default function BrowsePage() {
     load();
   }, []);
 
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
       const t = e.target as Node;
@@ -122,16 +130,54 @@ export default function BrowsePage() {
       if (searchBoxRef.current && !searchBoxRef.current.contains(t)) {
         setIsOpen(false);
       }
-      if (countryBoxRef.current && !countryBoxRef.current.contains(t)) {
-        setCountryMenuOpen(false);
-      }
-      if (modeBoxRef.current && !modeBoxRef.current.contains(t)) {
-        setModeMenuOpen(false);
-      }
+
+      // If clicking inside either menu button, ignore (we handle toggles)
+      if (countryBtnRef.current?.contains(t) || modeBtnRef.current?.contains(t))
+        return;
+
+      // If clicking inside the open menus, ignore
+      const countryMenuEl = document.getElementById("country-menu");
+      const modeMenuEl = document.getElementById("mode-menu");
+      if (countryMenuEl?.contains(t) || modeMenuEl?.contains(t)) return;
+
+      setCountryMenuOpen(false);
+      setModeMenuOpen(false);
     }
+
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
+
+  // Reposition menus on scroll/resize if open
+  useEffect(() => {
+    function updatePositions() {
+      if (countryMenuOpen && countryBtnRef.current) {
+        const r = countryBtnRef.current.getBoundingClientRect();
+        setCountryMenuPos({
+          top: r.bottom + 8,
+          left: r.left,
+          width: r.width,
+        });
+      }
+      if (modeMenuOpen && modeBtnRef.current) {
+        const r = modeBtnRef.current.getBoundingClientRect();
+        setModeMenuPos({
+          top: r.bottom + 8,
+          left: r.left,
+          width: r.width,
+        });
+      }
+    }
+
+    if (countryMenuOpen || modeMenuOpen) updatePositions();
+
+    window.addEventListener("scroll", updatePositions, true);
+    window.addEventListener("resize", updatePositions);
+    return () => {
+      window.removeEventListener("scroll", updatePositions, true);
+      window.removeEventListener("resize", updatePositions);
+    };
+  }, [countryMenuOpen, modeMenuOpen]);
 
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -192,6 +238,7 @@ export default function BrowsePage() {
 
   return (
     <main className="min-h-screen bg-[#0b221b] text-white">
+      {/* HERO */}
       <section className="relative w-full overflow-hidden border-b border-white/10">
         <div className="relative h-[340px] w-full">
           <Image
@@ -211,7 +258,8 @@ export default function BrowsePage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf clubs.
+              A curated UK list of verified member hosts at prestigious golf
+              clubs.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -252,95 +300,53 @@ export default function BrowsePage() {
                 )}
               </div>
 
-              {/* Locations */}
-              <div ref={countryBoxRef} className="relative">
-                <button
-                  onClick={() => {
-                    setCountryMenuOpen((v) => !v);
-                    setModeMenuOpen(false);
-                  }}
-                  className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
-                >
-                  {countryFilter}
-                </button>
+              {/* Locations button (menu rendered as fixed below) */}
+              <button
+                ref={countryBtnRef}
+                onClick={() => {
+                  setModeMenuOpen(false);
 
-                {countryMenuOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
-                    {/* ✅ make sure all items are visible / scrollable if needed */}
-                    <div className="max-h-[360px] overflow-y-auto">
-                      {COUNTRY_OPTIONS.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => {
-                            setCountryFilter(c);
-                            setCountryMenuOpen(false);
-                          }}
-                          className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                            c === countryFilter ? "bg-white/10" : ""
-                          }`}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  setCountryMenuOpen((v) => {
+                    const next = !v;
+                    if (next && countryBtnRef.current) {
+                      const r = countryBtnRef.current.getBoundingClientRect();
+                      setCountryMenuPos({
+                        top: r.bottom + 8,
+                        left: r.left,
+                        width: r.width,
+                      });
+                    }
+                    return next;
+                  });
+                }}
+                className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
+              >
+                {countryFilter}
+              </button>
 
-              {/* Recommended */}
-              <div ref={modeBoxRef} className="relative">
-                <button
-                  onClick={() => {
-                    setModeMenuOpen((v) => !v);
-                    setCountryMenuOpen(false);
-                  }}
-                  className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
-                >
-                  {modeLabel}
-                </button>
+              {/* Recommended button (menu rendered as fixed below) */}
+              <button
+                ref={modeBtnRef}
+                onClick={() => {
+                  setCountryMenuOpen(false);
 
-                {modeMenuOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-[260px] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
-                    <div className="max-h-[360px] overflow-y-auto">
-                      <button
-                        onClick={() => {
-                          setMode("recommended");
-                          setModeMenuOpen(false);
-                        }}
-                        className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                          mode === "recommended" ? "bg-white/10" : ""
-                        }`}
-                      >
-                        Recommended (Prestigious)
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setMode("all");
-                          setModeMenuOpen(false);
-                        }}
-                        className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                          mode === "all" ? "bg-white/10" : ""
-                        }`}
-                      >
-                        All clubs
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setMode("curated");
-                          setModeMenuOpen(false);
-                        }}
-                        className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                          mode === "curated" ? "bg-white/10" : ""
-                        }`}
-                      >
-                        Curated only
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  setModeMenuOpen((v) => {
+                    const next = !v;
+                    if (next && modeBtnRef.current) {
+                      const r = modeBtnRef.current.getBoundingClientRect();
+                      setModeMenuPos({
+                        top: r.bottom + 8,
+                        left: r.left,
+                        width: r.width,
+                      });
+                    }
+                    return next;
+                  });
+                }}
+                className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
+              >
+                {modeLabel}
+              </button>
             </div>
 
             <p className="mt-4 text-xs text-white/55">
@@ -356,6 +362,87 @@ export default function BrowsePage() {
         </div>
       </section>
 
+      {/* ✅ FIXED MENUS (cannot be clipped by hero / grid) */}
+      {countryMenuOpen && countryMenuPos && (
+        <div
+          id="country-menu"
+          className="fixed z-[9999] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl"
+          style={{
+            top: countryMenuPos.top,
+            left: countryMenuPos.left,
+            minWidth: Math.max(countryMenuPos.width, 220),
+          }}
+        >
+          <div className="max-h-[360px] overflow-y-auto">
+            {COUNTRY_OPTIONS.map((c) => (
+              <button
+                key={c}
+                onClick={() => {
+                  setCountryFilter(c);
+                  setCountryMenuOpen(false);
+                }}
+                className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                  c === countryFilter ? "bg-white/10" : ""
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {modeMenuOpen && modeMenuPos && (
+        <div
+          id="mode-menu"
+          className="fixed z-[9999] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl"
+          style={{
+            top: modeMenuPos.top,
+            left: modeMenuPos.left,
+            minWidth: Math.max(modeMenuPos.width, 260),
+          }}
+        >
+          <div className="max-h-[360px] overflow-y-auto">
+            <button
+              onClick={() => {
+                setMode("recommended");
+                setModeMenuOpen(false);
+              }}
+              className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                mode === "recommended" ? "bg-white/10" : ""
+              }`}
+            >
+              Recommended (Prestigious)
+            </button>
+
+            <button
+              onClick={() => {
+                setMode("all");
+                setModeMenuOpen(false);
+              }}
+              className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                mode === "all" ? "bg-white/10" : ""
+              }`}
+            >
+              All clubs
+            </button>
+
+            <button
+              onClick={() => {
+                setMode("curated");
+                setModeMenuOpen(false);
+              }}
+              className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                mode === "curated" ? "bg-white/10" : ""
+              }`}
+            >
+              Curated only
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* GRID */}
       <div className="mx-auto max-w-7xl px-6 -mt-10 pb-12">
         {loading && <p className="text-white/70">Loading clubs…</p>}
         {err && <p className="text-red-400">{err}</p>}
@@ -363,7 +450,7 @@ export default function BrowsePage() {
         <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
           {filteredClubs.map((c) => {
             const location = formatLocation(c.region, c.country);
-            const hostsAvailable = c.host_profiles?.[0]?.count;
+            const hostsAvailable = c.host_profiles?.[0]?.count ?? 0;
 
             return (
               <div
@@ -375,10 +462,7 @@ export default function BrowsePage() {
 
                 <div className="mt-4 space-y-2 text-sm">
                   <div className="text-white/80">
-                    👤{" "}
-                    <span className="font-semibold">
-                      {typeof hostsAvailable === "number" ? hostsAvailable : "—"}
-                    </span>{" "}
+                    👤 <span className="font-semibold">{hostsAvailable}</span>{" "}
                     hosts available
                   </div>
 
