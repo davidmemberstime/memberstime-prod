@@ -77,7 +77,7 @@ export default function BrowsePage() {
   const [isOpen, setIsOpen] = useState(false);
 
   const [countryFilter, setCountryFilter] = useState<string>("All locations");
-  const [mode, setMode] = useState<Mode>("recommended"); // ✅ default: Prestigious only
+  const [mode, setMode] = useState<Mode>("recommended");
   const [countryMenuOpen, setCountryMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
 
@@ -115,7 +115,6 @@ export default function BrowsePage() {
     load();
   }, []);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
       const t = e.target as Node;
@@ -159,20 +158,17 @@ export default function BrowsePage() {
   const filteredClubs = useMemo(() => {
     let list = clubs;
 
-    // ✅ STRICT: Recommended = Prestigious ONLY
     if (mode === "recommended") {
       list = list.filter((c) => c.tier === "Prestigious");
     } else if (mode === "curated") {
       list = list.filter((c) => c.tier === "Curated");
     }
 
-    // Country filter
     if (countryFilter !== "All locations") {
       const target = countryFilter.toLowerCase();
       list = list.filter((c) => (c.country || "").toLowerCase() === target);
     }
 
-    // Sort: Recommended feels alive => hosts desc then name
     const hostCount = (c: ClubRow) => c.host_profiles?.[0]?.count ?? 0;
 
     list = [...list].sort((a, b) => {
@@ -196,7 +192,6 @@ export default function BrowsePage() {
 
   return (
     <main className="min-h-screen bg-[#0b221b] text-white">
-      {/* HERO */}
       <section className="relative w-full overflow-hidden border-b border-white/10">
         <div className="relative h-[340px] w-full">
           <Image
@@ -219,7 +214,6 @@ export default function BrowsePage() {
               A curated UK list of verified member hosts at prestigious golf clubs.
             </p>
 
-            {/* SEARCH + FILTER ROW */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               {/* Search */}
               <div ref={searchBoxRef} className="relative w-[360px] max-w-full">
@@ -258,7 +252,7 @@ export default function BrowsePage() {
                 )}
               </div>
 
-              {/* All locations */}
+              {/* Locations */}
               <div ref={countryBoxRef} className="relative">
                 <button
                   onClick={() => {
@@ -271,21 +265,24 @@ export default function BrowsePage() {
                 </button>
 
                 {countryMenuOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-[220px] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
-                    {COUNTRY_OPTIONS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => {
-                          setCountryFilter(c);
-                          setCountryMenuOpen(false);
-                        }}
-                        className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                          c === countryFilter ? "bg-white/10" : ""
-                        }`}
-                      >
-                        {c}
-                      </button>
-                    ))}
+                  <div className="absolute right-0 z-50 mt-2 w-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
+                    {/* ✅ make sure all items are visible / scrollable if needed */}
+                    <div className="max-h-[360px] overflow-y-auto">
+                      {COUNTRY_OPTIONS.map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            setCountryFilter(c);
+                            setCountryMenuOpen(false);
+                          }}
+                          className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                            c === countryFilter ? "bg-white/10" : ""
+                          }`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -303,42 +300,44 @@ export default function BrowsePage() {
                 </button>
 
                 {modeMenuOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-[240px] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
-                    <button
-                      onClick={() => {
-                        setMode("recommended");
-                        setModeMenuOpen(false);
-                      }}
-                      className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                        mode === "recommended" ? "bg-white/10" : ""
-                      }`}
-                    >
-                      Recommended (Prestigious)
-                    </button>
+                  <div className="absolute right-0 z-50 mt-2 w-[260px] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
+                    <div className="max-h-[360px] overflow-y-auto">
+                      <button
+                        onClick={() => {
+                          setMode("recommended");
+                          setModeMenuOpen(false);
+                        }}
+                        className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                          mode === "recommended" ? "bg-white/10" : ""
+                        }`}
+                      >
+                        Recommended (Prestigious)
+                      </button>
 
-                    <button
-                      onClick={() => {
-                        setMode("all");
-                        setModeMenuOpen(false);
-                      }}
-                      className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                        mode === "all" ? "bg-white/10" : ""
-                      }`}
-                    >
-                      All clubs
-                    </button>
+                      <button
+                        onClick={() => {
+                          setMode("all");
+                          setModeMenuOpen(false);
+                        }}
+                        className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                          mode === "all" ? "bg-white/10" : ""
+                        }`}
+                      >
+                        All clubs
+                      </button>
 
-                    <button
-                      onClick={() => {
-                        setMode("curated");
-                        setModeMenuOpen(false);
-                      }}
-                      className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                        mode === "curated" ? "bg-white/10" : ""
-                      }`}
-                    >
-                      Curated only
-                    </button>
+                      <button
+                        onClick={() => {
+                          setMode("curated");
+                          setModeMenuOpen(false);
+                        }}
+                        className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
+                          mode === "curated" ? "bg-white/10" : ""
+                        }`}
+                      >
+                        Curated only
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -357,7 +356,6 @@ export default function BrowsePage() {
         </div>
       </section>
 
-      {/* GRID */}
       <div className="mx-auto max-w-7xl px-6 -mt-10 pb-12">
         {loading && <p className="text-white/70">Loading clubs…</p>}
         {err && <p className="text-red-400">{err}</p>}
@@ -379,9 +377,7 @@ export default function BrowsePage() {
                   <div className="text-white/80">
                     👤{" "}
                     <span className="font-semibold">
-                      {typeof hostsAvailable === "number"
-                        ? hostsAvailable
-                        : "—"}
+                      {typeof hostsAvailable === "number" ? hostsAvailable : "—"}
                     </span>{" "}
                     hosts available
                   </div>
