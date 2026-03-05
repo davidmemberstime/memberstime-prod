@@ -8,6 +8,8 @@ export type HostCard = {
   hosted_rounds: number | null;
   rehost_rate: number | null;
   is_accepting: boolean | null;
+  hosting_fee_gbp: number | null;
+  guest_green_fee_gbp: number | null;
   full_name: string | null;
   cdh_number: string | null;
 };
@@ -17,6 +19,10 @@ function pct(val: number | null) {
   const n = Number(val);
   if (Number.isNaN(n)) return "—";
   return `${n}%`;
+}
+
+function gbp(n: number) {
+  return `£${n.toLocaleString("en-GB")}`;
 }
 
 export default function HostsClient({
@@ -31,19 +37,21 @@ export default function HostsClient({
   const [selected, setSelected] = useState<HostCard | null>(null);
 
   const acceptingHosts = useMemo(() => {
-    // keep only accepting hosts in UI
     return hosts.filter((h) => h.is_accepting !== false);
   }, [hosts]);
 
   return (
-    <section id="hosts" className="border-t border-white/10 bg-black/20 p-6 md:p-8 scroll-mt-28">
+    <section
+      id="hosts"
+      className="border-t border-white/10 bg-black/20 p-6 md:p-8 scroll-mt-28"
+    >
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-semibold tracking-tight">
             Hosts at {clubName}
           </h2>
           <p className="mt-2 text-sm text-white/70">
-            Verified member hosts. Request a date and the host will confirm.
+            Select a host and request a date. The host will confirm availability.
           </p>
         </div>
 
@@ -55,9 +63,17 @@ export default function HostsClient({
         </a>
       </div>
 
+      <div className="mt-3 text-xs text-white/55">
+        <span className="font-semibold text-white/75">Payment on the day:</span>{" "}
+        Host fee + guest green fee + £20 clubhouse contribution to the club.{" "}
+        <span className="text-white/65">
+          Booking fee is paid online at request.
+        </span>
+      </div>
+
       {acceptingHosts.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div className="text-sm text-white/80 font-semibold">
+          <div className="text-sm font-semibold text-white/85">
             No hosts available yet.
           </div>
           <div className="mt-1 text-sm text-white/60">
@@ -68,6 +84,13 @@ export default function HostsClient({
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {acceptingHosts.map((h) => {
             const name = h.full_name?.trim() || "Member host";
+
+            const hostingFee = h.hosting_fee_gbp ?? null;
+            const greenFee = h.guest_green_fee_gbp ?? null;
+            const total =
+              hostingFee !== null && greenFee !== null
+                ? hostingFee + greenFee
+                : null;
 
             return (
               <div
@@ -101,16 +124,43 @@ export default function HostsClient({
                   </div>
                 </div>
 
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-white/60">
+                    Hosted round price
+                  </div>
+
+                  <div className="mt-1 text-2xl font-semibold">
+                    {total !== null ? gbp(total) : "£—"}
+                    <span className="ml-2 text-sm font-normal text-white/60">
+                      per guest
+                    </span>
+                  </div>
+
+                  <div className="mt-2 text-xs text-white/55">
+                    Includes green fee + hosting{" "}
+                    {greenFee !== null && hostingFee !== null ? (
+                      <>
+                        (<span className="text-white/70">{gbp(greenFee)}</span>{" "}
+                        green fee +{" "}
+                        <span className="text-white/70">{gbp(hostingFee)}</span>{" "}
+                        hosting)
+                      </>
+                    ) : (
+                      "(host pricing not set yet)"
+                    )}
+                    .
+                    <div className="mt-1">
+                      + £20 clubhouse contribution (paid to the club).
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   onClick={() => setSelected(h)}
-                  className="mt-5 block w-full text-center rounded-xl bg-[#d8b35a] px-4 py-2.5 text-sm font-semibold text-[#041b14] hover:brightness-110"
+                  className="mt-5 block w-full rounded-xl bg-[#d8b35a] px-4 py-2.5 text-sm font-semibold text-[#041b14] hover:brightness-110"
                 >
                   Request round
                 </button>
-
-                <p className="mt-3 text-xs text-white/55">
-                  Payment breakdown shown at booking.
-                </p>
               </div>
             );
           })}
