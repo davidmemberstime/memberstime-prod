@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 type Tier = "Curated" | "Prestigious";
+type Mode = "recommended" | "all" | "curated";
 
 type ClubRow = {
   id: string;
@@ -67,8 +68,6 @@ const COUNTRY_OPTIONS = [
   "Ireland",
 ];
 
-type Mode = "recommended" | "all" | "curated";
-
 export default function BrowsePage() {
   const [clubs, setClubs] = useState<ClubRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +77,7 @@ export default function BrowsePage() {
   const [isOpen, setIsOpen] = useState(false);
 
   const [countryFilter, setCountryFilter] = useState<string>("All locations");
-  const [mode, setMode] = useState<Mode>("recommended"); // default: Prestigious
+  const [mode, setMode] = useState<Mode>("recommended"); // ✅ default: Prestigious only
   const [countryMenuOpen, setCountryMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
 
@@ -160,7 +159,7 @@ export default function BrowsePage() {
   const filteredClubs = useMemo(() => {
     let list = clubs;
 
-    // Mode filter
+    // ✅ STRICT: Recommended = Prestigious ONLY
     if (mode === "recommended") {
       list = list.filter((c) => c.tier === "Prestigious");
     } else if (mode === "curated") {
@@ -173,7 +172,7 @@ export default function BrowsePage() {
       list = list.filter((c) => (c.country || "").toLowerCase() === target);
     }
 
-    // Sort: recommended should feel alive => hosts desc then name
+    // Sort: Recommended feels alive => hosts desc then name
     const hostCount = (c: ClubRow) => c.host_profiles?.[0]?.count ?? 0;
 
     list = [...list].sort((a, b) => {
@@ -190,7 +189,7 @@ export default function BrowsePage() {
 
   const modeLabel =
     mode === "recommended"
-      ? "Sort by Recommended"
+      ? "Recommended (Prestigious)"
       : mode === "all"
       ? "All clubs"
       : "Curated only";
@@ -217,8 +216,7 @@ export default function BrowsePage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf
-              clubs.
+              A curated UK list of verified member hosts at prestigious golf clubs.
             </p>
 
             {/* SEARCH + FILTER ROW */}
@@ -260,7 +258,7 @@ export default function BrowsePage() {
                 )}
               </div>
 
-              {/* All locations dropdown */}
+              {/* All locations */}
               <div ref={countryBoxRef} className="relative">
                 <button
                   onClick={() => {
@@ -292,7 +290,7 @@ export default function BrowsePage() {
                 )}
               </div>
 
-              {/* Recommended dropdown */}
+              {/* Recommended */}
               <div ref={modeBoxRef} className="relative">
                 <button
                   onClick={() => {
@@ -346,7 +344,6 @@ export default function BrowsePage() {
               </div>
             </div>
 
-            {/* Small status line */}
             <p className="mt-4 text-xs text-white/55">
               Showing{" "}
               <span className="text-white/80 font-semibold">
@@ -360,7 +357,7 @@ export default function BrowsePage() {
         </div>
       </section>
 
-      {/* CLUB GRID */}
+      {/* GRID */}
       <div className="mx-auto max-w-7xl px-6 -mt-10 pb-12">
         {loading && <p className="text-white/70">Loading clubs…</p>}
         {err && <p className="text-red-400">{err}</p>}
