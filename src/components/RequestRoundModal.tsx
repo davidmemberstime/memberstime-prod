@@ -18,11 +18,12 @@ export default function RequestRoundModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+
   const [requestedDate, setRequestedDate] = useState("");
   const [guestsCount, setGuestsCount] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   const minDate = useMemo(() => {
     const d = new Date();
@@ -81,75 +82,57 @@ export default function RequestRoundModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0b2a1f] p-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold">Request a round</h2>
-            <p className="mt-1 text-sm text-white/70">
-              Requesting a hosted round with{" "}
-              <span className="font-semibold text-white/85">{hostName}</span>.
-            </p>
-          </div>
 
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
-          >
-            ✕
-          </button>
-        </div>
+        <h2 className="text-xl font-semibold">
+          Request a round with {hostName}
+        </h2>
 
         {!success ? (
           <>
             <div className="mt-5 grid gap-4">
+
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-white/60">
-                  Preferred date
-                </label>
+                <label className="text-xs text-white/60">Preferred date</label>
 
                 <input
                   type="date"
                   value={requestedDate}
                   min={minDate}
                   onChange={(e) => setRequestedDate(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white backdrop-blur outline-none focus:border-white/30"
+                  className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white"
                 />
-
-                <p className="mt-2 text-xs text-white/55">
-                  This is a request — the host will confirm availability.
-                </p>
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-white/60">
-                  Guests
-                </label>
+                <label className="text-xs text-white/60">Guests</label>
 
                 <select
                   value={guestsCount}
                   onChange={(e) =>
-                    setGuestsCount((Number(e.target.value) as 1 | 2) ?? 1)
+                    setGuestsCount(Number(e.target.value) as 1 | 2)
                   }
                   disabled={guestsMax === 1}
-                  className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white backdrop-blur outline-none focus:border-white/30 disabled:opacity-60"
+                  className="mt-2 w-full rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-white"
                 >
                   <option value={1}>1 guest</option>
-                  {guestsMax === 2 && <option value={2}>2 guests</option>}
-                </select>
 
-                <p className="mt-2 text-xs text-white/55">
-                  This club allows up to{" "}
-                  <span className="text-white/75 font-semibold">{guestsMax}</span>{" "}
-                  guest{guestsMax === 2 ? "s" : ""}.
-                </p>
+                  {guestsMax === 2 && (
+                    <option value={2}>2 guests</option>
+                  )}
+                </select>
               </div>
+
             </div>
 
-            {err && <p className="mt-4 text-sm text-red-400">{err}</p>}
+            {err && (
+              <p className="mt-4 text-sm text-red-400">{err}</p>
+            )}
 
             <div className="mt-6 flex gap-3">
+
               <button
                 onClick={onClose}
-                className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white"
               >
                 Cancel
               </button>
@@ -157,29 +140,30 @@ export default function RequestRoundModal({
               <button
                 onClick={submit}
                 disabled={!requestedDate || loading}
-                className="flex-1 rounded-xl bg-[#d8b35a] px-4 py-2.5 text-sm font-semibold text-[#041b14] hover:brightness-110 disabled:opacity-50"
+                className="flex-1 rounded-xl bg-[#d8b35a] px-4 py-2.5 text-sm font-semibold text-[#041b14]"
               >
                 {loading ? "Sending…" : "Send request"}
               </button>
+
             </div>
           </>
         ) : (
           <div className="mt-6">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm font-semibold text-white/90">Request sent.</p>
-              <p className="mt-1 text-sm text-white/70">
-                You’ll be notified when the host responds.
-              </p>
-            </div>
+
+            <p className="text-sm text-white/80">
+              Request sent. The host will confirm availability.
+            </p>
 
             <button
               onClick={onClose}
-              className="mt-4 w-full rounded-xl bg-[#d8b35a] px-4 py-2.5 text-sm font-semibold text-[#041b14] hover:brightness-110"
+              className="mt-4 w-full rounded-xl bg-[#d8b35a] px-4 py-2.5 text-sm font-semibold text-[#041b14]"
             >
               Close
             </button>
+
           </div>
         )}
+
       </div>
     </div>
   );
