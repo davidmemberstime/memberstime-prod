@@ -26,12 +26,12 @@ export default function SignInPage() {
       .single();
 
     if (!profile) {
-      router.replace("/complete-profile");
+      router.replace("/for-members/dashboard");
       return;
     }
 
     if (!profile.onboarding_complete) {
-      router.replace("/complete-profile");
+      router.replace("/for-members/dashboard");;
       return;
     }
 
