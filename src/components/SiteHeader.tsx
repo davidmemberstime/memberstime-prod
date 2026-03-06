@@ -11,9 +11,10 @@ type AuthUser = {
 } | null;
 
 function navLinkClass(isActive: boolean) {
-  return isActive
-    ? "text-white"
-    : "text-white/80 hover:text-white transition-colors";
+  return [
+    "text-[11px] tracking-[0.14em] text-white/78 transition-colors hover:text-white",
+    isActive ? "text-white" : "",
+  ].join(" ");
 }
 
 export default function SiteHeader() {
@@ -60,25 +61,28 @@ export default function SiteHeader() {
   const isLoggedIn = !!user;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#041b14]/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-1">
-        {/* Logo */}
-       <Link
-  href="/"
-  className="relative block h-[130px] w-[130px] shrink-0 overflow-hidden"
-  aria-label="Members Time home"
->
-  <Image
-    src="/memberstime-headerlogo.png"
-    alt="Members Time"
-    fill
-    priority
-    className="object-contain"
-  />
-</Link>
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#041b14]/92 backdrop-blur-xl">
+      <div className="mx-auto flex min-h-[92px] max-w-7xl items-center justify-between px-6 py-0">
+        {/* Left: Logo */}
+        <div className="flex shrink-0 items-center">
+          <Link
+            href="/"
+            className="relative block h-[130px] w-[130px] shrink-0 overflow-hidden"
+            aria-label="Members Time home"
+          >
+            <Image
+              src="/memberstime-headerlogo.png"
+              alt="Members Time"
+              fill
+              priority
+              className="object-contain"
+              sizes="130px"
+            />
+          </Link>
+        </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-8 text-[12px] uppercase tracking-[0.22em] md:flex">
+        {/* Centre: Desktop Navigation */}
+        <nav className="hidden flex-1 items-center justify-center gap-8 md:flex">
           <Link href="/" className={navLinkClass(pathname === "/")}>
             Home
           </Link>
@@ -99,9 +103,7 @@ export default function SiteHeader() {
 
           <Link
             href="/for-members"
-            className={navLinkClass(
-              pathname?.startsWith("/for-members") ?? false
-            )}
+            className={navLinkClass(pathname?.startsWith("/for-members") ?? false)}
           >
             For Members
           </Link>
@@ -132,8 +134,8 @@ export default function SiteHeader() {
           )}
         </nav>
 
-        {/* Right side */}
-        <div className="flex items-center gap-3">
+        {/* Right: Actions */}
+        <div className="flex shrink-0 items-center gap-3">
           {!loadingAuth && !isLoggedIn && (
             <Link
               href="/auth/sign-in"
@@ -147,7 +149,7 @@ export default function SiteHeader() {
             <>
               <Link
                 href="/for-members/dashboard"
-                className="hidden rounded-xl border border-white/20 px-4 py-2 text-sm text-white hover:bg-white/10 transition md:inline-flex"
+                className="hidden rounded-xl border border-[#d8b35a]/60 bg-[#d8b35a]/10 px-4 py-2 text-sm font-medium text-[#f1d28c] transition hover:bg-[#d8b35a]/18 md:inline-flex"
               >
                 Dashboard
               </Link>
@@ -155,7 +157,7 @@ export default function SiteHeader() {
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white hover:bg-white/10 transition"
+                className="rounded-xl border border-white/12 px-4 py-2 text-sm text-white/78 transition hover:bg-white/5 hover:text-white"
               >
                 Sign out
               </button>
@@ -164,9 +166,9 @@ export default function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Navigation */}
       <div className="border-t border-white/10 px-6 pb-4 pt-3 md:hidden">
-        <div className="flex flex-wrap gap-5 text-[11px] uppercase tracking-[0.22em]">
+        <div className="flex flex-wrap gap-x-5 gap-y-3">
           <Link href="/" className={navLinkClass(pathname === "/")}>
             Home
           </Link>
@@ -187,9 +189,7 @@ export default function SiteHeader() {
 
           <Link
             href="/for-members"
-            className={navLinkClass(
-              pathname?.startsWith("/for-members") ?? false
-            )}
+            className={navLinkClass(pathname?.startsWith("/for-members") ?? false)}
           >
             For Members
           </Link>
@@ -209,39 +209,36 @@ export default function SiteHeader() {
           </Link>
 
           {isLoggedIn && (
-            <>
-              <Link
-                href="/for-members/dashboard"
-                className={navLinkClass(
-                  pathname?.startsWith("/for-members/dashboard") ?? false
-                )}
-              >
-                Dashboard
-              </Link>
-
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="text-white/80 hover:text-white transition-colors"
-              >
-                Sign out
-              </button>
-            </>
+            <Link
+              href="/for-members/dashboard"
+              className={navLinkClass(
+                pathname?.startsWith("/for-members/dashboard") ?? false
+              )}
+            >
+              Dashboard
+            </Link>
           )}
 
           {!loadingAuth && !isLoggedIn && (
             <Link
               href="/auth/sign-in"
-              className="text-white/80 hover:text-white transition-colors"
+              className="text-[11px] tracking-[0.14em] text-white/78 transition-colors hover:text-white"
             >
               Sign in
             </Link>
+          )}
+
+          {!loadingAuth && isLoggedIn && (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="text-[11px] tracking-[0.14em] text-white/78 transition-colors hover:text-white"
+            >
+              Sign out
+            </button>
           )}
         </div>
       </div>
     </header>
   );
 }
-
-
-
