@@ -36,7 +36,7 @@ export default function SignInPage() {
     }
 
     if (profile.verification_status === "verified") {
-      router.replace("/browse");
+      router.replace("/for-members/dashboard");
       return;
     }
 
