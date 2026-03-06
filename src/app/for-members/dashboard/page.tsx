@@ -1,337 +1,446 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import SiteHeader from "@/components/SiteHeader";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-type BookingRequestRow = {
+type ClubHit = {
   id: string;
-  requested_date: string | null;
-  requested_date_2: string | null;
-  requested_date_3: string | null;
-  guests_count: number;
-  status: string;
-  notes: string | null;
-  host_profile_id: string;
-  club_id: string;
-  guest_profile_id?: string | null;
-  guest_user_id?: string | null;
+  name: string;
+  town?: string | null;
+  region?: string | null;
+  country?: string | null;
 };
 
-type HostProfile = {
-  id: string;
-  club_id: string;
-};
-
-type GuestProfile = {
-  id: string;
-  full_name: string | null;
-  handicap: number | null;
-  dob: string | null;
-};
-
-type DisplayRequest = BookingRequestRow & {
-  guest_first_name: string;
-  guest_handicap: number | null;
-  guest_age_band: string;
-};
-
-function firstName(fullName: string | null | undefined) {
-  const s = (fullName || "").trim();
-  if (!s) return "Guest";
-  return s.split(/\s+/)[0];
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
 }
 
-function getAgeFromDob(dob: string | null | undefined) {
-  if (!dob) return null;
+export default function ForMembersPage() {
+  const router = useRouter();
 
-  const birth = new Date(dob);
-  if (Number.isNaN(birth.getTime())) return null;
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
 
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
+  const [dob, setDob] = useState("");
+  const [clubQuery, setClubQuery] = useState("");
+  const [clubResults, setClubResults] = useState<ClubHit[]>([]);
+  const [clubOpen, setClubOpen] = useState(false);
+  const [homeClubName, setHomeClubName] = useState("");
+  const [homeClubId, setHomeClubId] = useState<string | null>(null);
 
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < birth.getDate())
-  ) {
-    age--;
-  }
+  const [handicap, setHandicap] = useState("");
+  const [cdhNumber, setCdhNumber] = useState("");
 
-  return age >= 0 ? age : null;
-}
+  const [fee1, setFee1] = useState("25");
+  const [fee2, setFee2] = useState("40");
 
-function getAgeBand(dob: string | null | undefined) {
-  const age = getAgeFromDob(dob);
-  if (age === null) return "Not provided";
-  if (age < 20) return "Under 20";
-  if (age >= 70) return "70+";
-  return `${Math.floor(age / 10) * 10}s`;
-}
+  const [notes, setNotes] = useState("");
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return null;
-
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-export default function ForMembersDashboardPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [requests, setRequests] = useState<DisplayRequest[]>([]);
 
-  useEffect(() => {
-    loadRequests();
+  const clubWrapRef = useRef<HTMLDivElement | null>(null);
+  const debounceRef = useRef<number | null>(null);
+
+  const todayMaxDob = useMemo(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
   }, []);
 
-  async function loadRequests() {
-    setLoading(true);
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (!clubWrapRef.current?.contains(e.target as Node)) {
+        setClubOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  useEffect(() => {
+    const q = clubQuery.trim();
+
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+
+    if (!q) {
+      setClubResults([]);
+      setClubOpen(false);
+      return;
+    }
+
+    debounceRef.current = window.setTimeout(async () => {
+      const { data } = await supabase
+        .from("club_directory")
+        .select("id,name,town,region,country,is_active")
+        .eq("is_active", true)
+        .ilike("name", `%${q}%`)
+        .order("name", { ascending: true })
+        .limit(8);
+
+      setClubResults(
+        ((data as any[]) ?? []).map((x) => ({
+          id: x.id,
+          name: x.name,
+          town: x.town,
+          region: x.region,
+          country: x.country,
+        }))
+      );
+      setClubOpen(true);
+    }, 220);
+
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [clubQuery]);
+
+  function pickClub(c: ClubHit) {
+    setHomeClubName(c.name);
+    setHomeClubId(c.id);
+    setClubQuery(c.name);
+    setClubOpen(false);
+  }
+
+  function getAgeFromDob(value: string) {
+    const birth = new Date(value);
+    const today = new Date();
+
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
 
+    const name = fullName.trim();
+    const em = email.trim().toLowerCase();
+    const ph = phone.trim();
+    const cleanDob = dob.trim();
+    const cleanCdh = cdhNumber.trim();
+    const cleanHandicap = handicap.trim();
+
+    if (!name) return setError("Please enter your full name.");
+    if (!em) return setError("Please enter your email.");
+    if (!password || password.length < 8) {
+      return setError("Password must be at least 8 characters.");
+    }
+    if (!cleanDob) return setError("Please enter your date of birth.");
+    if (!clubQuery.trim()) {
+      return setError("Please enter your home club and select it from the list.");
+    }
+    if (!cleanCdh) return setError("Please enter your CDH number.");
+    if (!cleanHandicap) return setError("Please enter your handicap.");
+
+    const handicapNumber = Number(cleanHandicap);
+    if (Number.isNaN(handicapNumber)) {
+      return setError("Handicap must be a valid number.");
+    }
+    if (handicapNumber < 0 || handicapNumber > 54) {
+      return setError("Handicap must be between 0 and 54.");
+    }
+
+    const age = getAgeFromDob(cleanDob);
+    if (Number.isNaN(age) || age < 18) {
+      return setError("Members must be at least 18 years old.");
+    }
+
+    if (!fee1.trim() || Number.isNaN(Number(fee1))) {
+      return setError("Enter a valid host fee for 1 guest.");
+    }
+
+    if (!fee2.trim() || Number.isNaN(Number(fee2))) {
+      return setError("Enter a valid host fee for 2 guests.");
+    }
+
+    setLoading(true);
+
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: signUpData, error: signUpError } =
+        await supabase.auth.signUp({
+          email: em,
+          password,
+          options: {
+            data: { full_name: name },
+          },
+        });
 
-      if (userError) throw userError;
-      if (!user) {
-        setError("Please sign in to view booking requests.");
-        setLoading(false);
-        return;
-      }
+      if (signUpError) throw signUpError;
 
-      const { data: hostProfiles, error: hostProfilesError } = await supabase
-        .from("host_profiles")
-        .select("id, club_id")
-        .eq("user_id", user.id);
+      const userId = signUpData.user?.id;
+      if (!userId) throw new Error("Sign up succeeded but no user id returned.");
 
-      if (hostProfilesError) throw hostProfilesError;
-
-      const profileRows = (hostProfiles ?? []) as HostProfile[];
-
-      if (profileRows.length === 0) {
-        setRequests([]);
-        setLoading(false);
-        return;
-      }
-
-      const hostProfileIds = profileRows.map((p) => p.id);
-
-      const { data: bookingRows, error: bookingError } = await supabase
-        .from("booking_requests")
-        .select(
-          "id, requested_date, requested_date_2, requested_date_3, guests_count, status, notes, host_profile_id, club_id, guest_profile_id, guest_user_id"
-        )
-        .in("host_profile_id", hostProfileIds)
-        .order("requested_date", { ascending: true });
-
-      if (bookingError) throw bookingError;
-
-      const rawRequests = (bookingRows ?? []) as BookingRequestRow[];
-
-      const guestIds = Array.from(
-        new Set(
-          rawRequests
-            .map((r) => r.guest_profile_id || r.guest_user_id)
-            .filter(Boolean)
-        )
-      ) as string[];
-
-      let guestMap = new Map<string, GuestProfile>();
-
-      if (guestIds.length > 0) {
-        const { data: guestRows, error: guestError } = await supabase
-          .from("profiles")
-          .select("id, full_name, handicap, dob")
-          .in("id", guestIds);
-
-        if (guestError) throw guestError;
-
-        guestMap = new Map(
-          ((guestRows ?? []) as GuestProfile[]).map((g) => [g.id, g])
-        );
-      }
-
-      const enriched: DisplayRequest[] = rawRequests.map((req) => {
-        const guestId = req.guest_profile_id || req.guest_user_id || "";
-        const guest = guestMap.get(guestId);
-
-        return {
-          ...req,
-          guest_first_name: firstName(guest?.full_name),
-          guest_handicap:
-            guest?.handicap === null || guest?.handicap === undefined
-              ? null
-              : Number(guest.handicap),
-          guest_age_band: getAgeBand(guest?.dob),
-        };
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: userId,
+        role: "host",
+        verification_status: "pending",
+        onboarding_complete: true,
+        full_name: name,
+        email: em,
+        phone: ph || null,
+        dob: cleanDob,
+        home_club_name: homeClubName || clubQuery.trim(),
+        home_club_id: homeClubId,
+        handicap: handicapNumber,
+        cdh_number: cleanCdh,
+        host_fee_1: Number(fee1),
+        host_fee_2: Number(fee2),
+        notes: notes.trim() || null,
       });
 
-      setRequests(enriched);
-    } catch (e: any) {
-      setError(e?.message || "Something went wrong loading requests.");
+      if (profileError) throw profileError;
+
+      const { error: hostProfileError } = await supabase
+        .from("host_profiles")
+        .insert({
+          user_id: userId,
+          club_id: homeClubId,
+          hosting_fee_gbp: Number(fee1),
+          guest_green_fee_gbp: 0,
+          hosted_rounds: 0,
+          rehost_rate: 0,
+          is_accepting: true,
+        });
+
+      if (hostProfileError) throw hostProfileError;
+
+      router.push("/pending");
+    } catch (err: any) {
+      setError(err?.message ?? "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function updateRequestStatus(
-    id: string,
-    status: "accepted" | "declined"
-  ) {
-    try {
-      const { error: updateError } = await supabase
-        .from("booking_requests")
-        .update({ status })
-        .eq("id", id);
-
-      if (updateError) throw updateError;
-
-      await loadRequests();
-    } catch (e: any) {
-      setError(e?.message || "Unable to update request.");
-    }
-  }
-
   return (
-    <main className="min-h-screen bg-[#0b2a1f] text-white">
-      <SiteHeader />
-
-      <div className="mx-auto max-w-5xl px-6 py-12">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Member dashboard
+    <main className="min-h-screen bg-[#0b221b] text-white">
+      <div className="mx-auto max-w-3xl px-6 py-14">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Club Member Registration
         </h1>
-        <p className="mt-2 text-white/70">
-          View and manage your incoming booking requests.
+        <p className="mt-3 text-white/70">
+          Members join free. Hosting is optional. We verify membership, standards
+          and suitability to protect clubs.
         </p>
 
-        {loading ? (
-          <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
-            Loading requests...
-          </div>
-        ) : error ? (
-          <div className="mt-8 rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-red-100">
-            {error}
-          </div>
-        ) : requests.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
-            No booking requests yet.
-          </div>
-        ) : (
-          <div className="mt-8 grid gap-5">
-            {requests.map((req) => (
-              <div
-                key={req.id}
-                className="rounded-2xl border border-white/10 bg-white/5 p-6"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-xl font-semibold">Booking request</h2>
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+          {error && (
+            <div className="mb-5 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {error}
+            </div>
+          )}
 
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/80">
-                    {req.status}
-                  </span>
+          <form onSubmit={onSubmit} className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Full name *">
+                <input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                  placeholder="David Evans"
+                />
+              </Field>
+
+              <Field label="Telephone">
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                  placeholder="07..."
+                />
+              </Field>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Email *">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                  placeholder="you@example.com"
+                />
+              </Field>
+
+              <Field label="Password *">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                  placeholder="Minimum 8 characters"
+                />
+              </Field>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Date of birth *">
+                <input
+                  type="date"
+                  value={dob}
+                  max={todayMaxDob}
+                  onChange={(e) => setDob(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                />
+              </Field>
+
+              <Field label="Age shown publicly">
+                <div className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white/70">
+                  Your exact date of birth stays private. Guests will only see
+                  your age band.
                 </div>
+              </Field>
+            </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-white/60">Guest</div>
-                    <div className="mt-1 text-lg font-semibold">
-                      {req.guest_first_name}
-                    </div>
-                  </div>
+            <div ref={clubWrapRef} className="relative">
+              <Field label="Home club * (start typing, then select)">
+                <input
+                  value={clubQuery}
+                  onChange={(e) => {
+                    setClubQuery(e.target.value);
+                    setHomeClubName("");
+                    setHomeClubId(null);
+                  }}
+                  onFocus={() => {
+                    if (clubResults.length) setClubOpen(true);
+                  }}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                  placeholder="e.g. Royal St George’s"
+                />
+              </Field>
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-white/60">Handicap</div>
-                    <div className="mt-1 text-lg font-semibold">
-                      {req.guest_handicap !== null
-                        ? Math.round(req.guest_handicap)
-                        : "Not provided"}
-                    </div>
-                  </div>
+              {clubOpen && clubResults.length > 0 && (
+                <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#061f18]/95 shadow-2xl backdrop-blur">
+                  {clubResults.map((c) => {
+                    const meta = [c.town, c.region, c.country]
+                      .filter(Boolean)
+                      .join(", ");
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-white/60">Age band</div>
-                    <div className="mt-1 text-lg font-semibold">
-                      {req.guest_age_band}
-                    </div>
-                  </div>
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => pickClub(c)}
+                        className="w-full px-4 py-3 text-left hover:bg-white/5"
+                      >
+                        <div className="text-sm text-white/90">{c.name}</div>
+                        {meta ? (
+                          <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/50">
+                            {meta}
+                          </div>
+                        ) : null}
+                      </button>
+                    );
+                  })}
                 </div>
+              )}
+            </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-white/60">Preferred date</div>
-                    <div className="mt-1 text-sm font-semibold text-white/90">
-                      {formatDate(req.requested_date) || "Not provided"}
-                    </div>
-                  </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Handicap *">
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="54"
+                  value={handicap}
+                  onChange={(e) => setHandicap(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                  placeholder="e.g. 8.2"
+                />
+              </Field>
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-white/60">Second option</div>
-                    <div className="mt-1 text-sm font-semibold text-white/90">
-                      {formatDate(req.requested_date_2) || "Not provided"}
-                    </div>
-                  </div>
+              <Field label="CDH number *">
+                <input
+                  value={cdhNumber}
+                  onChange={(e) => setCdhNumber(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                  placeholder="England Golf CDH"
+                />
+              </Field>
+            </div>
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-white/60">Third option</div>
-                    <div className="mt-1 text-sm font-semibold text-white/90">
-                      {formatDate(req.requested_date_3) || "Not provided"}
-                    </div>
-                  </div>
-                </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Your host fee for 1 guest (GBP) *">
+                <input
+                  value={fee1}
+                  onChange={(e) => setFee1(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                />
+              </Field>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-white/60">Guests</div>
-                    <div className="mt-1 text-lg font-semibold">
-                      {req.guests_count}
-                    </div>
-                  </div>
+              <Field label="Your host fee for 2 guests (GBP) *">
+                <input
+                  value={fee2}
+                  onChange={(e) => setFee2(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                />
+              </Field>
+            </div>
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-white/60">Club ID</div>
-                    <div className="mt-1 break-all text-sm text-white/85">
-                      {req.club_id}
-                    </div>
-                  </div>
-                </div>
+            <Field label="Notes (optional)">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="min-h-[110px] w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                placeholder="Availability, preferred contact method, anything you want us to know."
+              />
+            </Field>
 
-                <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-xs text-white/60">Notes</div>
-                  <div className="mt-1 text-sm text-white/85">
-                    {req.notes?.trim() ? req.notes : "No notes added."}
-                  </div>
-                </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
+              By applying, you confirm you will host only in line with your
+              club’s rules and you accept responsibility for guest conduct.
+            </div>
 
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <button
-                    onClick={() => updateRequestStatus(req.id, "accepted")}
-                    className="rounded-xl bg-[#c58a3a] px-4 py-2 text-sm font-semibold text-[#0b2a1f] hover:brightness-110"
-                  >
-                    Accept
-                  </button>
-
-                  <button
-                    onClick={() => updateRequestStatus(req.id, "declined")}
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-                  >
-                    Decline
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+            <button
+              type="submit"
+              disabled={loading}
+              className={cx(
+                "w-full rounded-xl px-4 py-3 text-sm font-semibold transition",
+                loading
+                  ? "bg-white/10 text-white/60"
+                  : "bg-[#d8b35a] text-[#041b14] hover:brightness-110"
+              )}
+            >
+              {loading ? "Submitting…" : "Submit application"}
+            </button>
+          </form>
+        </div>
       </div>
     </main>
+  );
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-2 text-xs uppercase tracking-[0.22em] text-white/60">
+        {label}
+      </div>
+      {children}
+    </label>
   );
 }
