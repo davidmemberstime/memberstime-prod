@@ -61,22 +61,21 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#041b14]/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-1">
         {/* Logo */}
-        <Link
-          href="/"
-          className="relative block h-[72px] w-[72px] shrink-0 overflow-hidden rounded-md"
-          aria-label="Members Time home"
-        >
-          <Image
-            src="/memberstime-headerlogo.png"
-            alt="Members Time"
-            fill
-            priority
-            className="object-contain"
-            sizes="72px"
-          />
-        </Link>
+       <Link
+  href="/"
+  className="relative block h-[110px] w-[110px] shrink-0 overflow-hidden"
+  aria-label="Members Time home"
+>
+  <Image
+    src="/memberstime-headerlogo.png"
+    alt="Members Time"
+    fill
+    priority
+    className="object-contain"
+  />
+</Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-8 text-[12px] uppercase tracking-[0.22em] md:flex">
@@ -243,3 +242,4 @@ export default function SiteHeader() {
     </header>
   );
 }
+
