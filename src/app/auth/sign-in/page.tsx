@@ -40,7 +40,7 @@ export default function SignInPage() {
       return;
     }
 
-    router.replace("/pending");
+    router.replace("/for-members/dashboard");
   }
 
   async function onSubmit(e: React.FormEvent) {
