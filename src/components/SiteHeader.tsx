@@ -65,7 +65,7 @@ export default function SiteHeader() {
         {/* Logo */}
        <Link
   href="/"
-  className="relative block h-[96px] w-[96px] shrink-0 overflow-hidden"
+  className="relative block h-[130px] w-[130px] shrink-0 overflow-hidden"
   aria-label="Members Time home"
 >
   <Image
@@ -242,5 +242,6 @@ export default function SiteHeader() {
     </header>
   );
 }
+
 
 
