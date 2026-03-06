@@ -5,10 +5,9 @@ import RequestRoundModal from "@/components/RequestRoundModal";
 
 type Host = {
   host_profile_id: string;
-  user_id: string;
   full_name: string | null;
-  cdh_number: string | null;
   handicap: number | null;
+  dob: string | null;
   hosted_rounds: number;
   rehost_rate: number;
   is_accepting: boolean;
@@ -19,12 +18,39 @@ type Host = {
 function firstName(fullName: string | null) {
   const s = (fullName || "").trim();
   if (!s) return "Member host";
-  // split on whitespace and take first token
   return s.split(/\s+/)[0];
 }
 
 function money(n: number) {
   return `£${Math.round(n).toLocaleString("en-GB")}`;
+}
+
+function getAgeFromDob(dob: string | null) {
+  if (!dob) return null;
+
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birth.getDate())
+  ) {
+    age--;
+  }
+
+  return age >= 0 ? age : null;
+}
+
+function getAgeBand(dob: string | null) {
+  const age = getAgeFromDob(dob);
+  if (age === null) return "Age band not provided";
+  if (age < 20) return "Under 20";
+  if (age >= 70) return "70+";
+  return `${Math.floor(age / 10) * 10}s`;
 }
 
 export default function HostsClient({
@@ -46,7 +72,7 @@ export default function HostsClient({
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div id="hosts" className="mx-auto max-w-6xl px-6 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -86,8 +112,11 @@ export default function HostsClient({
                   <div className="text-lg font-semibold">{hostLabel}</div>
                   <div className="mt-1 text-xs text-white/60">
                     {h.handicap !== null && h.handicap !== undefined
-                      ? `Handicap ${h.handicap}`
+                      ? `Handicap ${Math.round(Number(h.handicap))}`
                       : "Handicap not provided"}
+                  </div>
+                  <div className="mt-1 text-xs text-white/60">
+                    Age band: {getAgeBand(h.dob)}
                   </div>
                 </div>
 
