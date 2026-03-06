@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-type ClubHit = { id: string; name: string; town?: string | null; region?: string | null; country?: string | null };
+type ClubHit = {
+  id: string;
+  name: string;
+  town?: string | null;
+  region?: string | null;
+  country?: string | null;
+};
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -18,17 +24,19 @@ export default function ForMembersPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
+  const [dob, setDob] = useState("");
+
   const [clubQuery, setClubQuery] = useState("");
   const [clubResults, setClubResults] = useState<ClubHit[]>([]);
   const [clubOpen, setClubOpen] = useState(false);
   const [homeClubName, setHomeClubName] = useState("");
   const [homeClubId, setHomeClubId] = useState<string | null>(null);
 
-  const [handicap, setHandicap] = useState<string>("");
+  const [handicap, setHandicap] = useState("");
   const [cdhNumber, setCdhNumber] = useState("");
 
-  const [fee1, setFee1] = useState<string>("25");
-  const [fee2, setFee2] = useState<string>("40");
+  const [fee1, setFee1] = useState("25");
+  const [fee2, setFee2] = useState("40");
 
   const [notes, setNotes] = useState("");
 
@@ -38,10 +46,19 @@ export default function ForMembersPage() {
   const clubWrapRef = useRef<HTMLDivElement | null>(null);
   const debounceRef = useRef<number | null>(null);
 
+  const todayMaxDob = useMemo(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }, []);
+
   useEffect(() => {
     function onDown(e: MouseEvent) {
       if (!clubWrapRef.current?.contains(e.target as Node)) setClubOpen(false);
     }
+
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
@@ -65,13 +82,15 @@ export default function ForMembersPage() {
         .order("name", { ascending: true })
         .limit(8);
 
-      setClubResults((data as any[])?.map((x) => ({
-        id: x.id,
-        name: x.name,
-        town: x.town,
-        region: x.region,
-        country: x.country,
-      })) ?? []);
+      setClubResults(
+        ((data as any[]) ?? []).map((x) => ({
+          id: x.id,
+          name: x.name,
+          town: x.town,
+          region: x.region,
+          country: x.country,
+        }))
+      );
       setClubOpen(true);
     }, 220);
 
@@ -87,6 +106,23 @@ export default function ForMembersPage() {
     setClubOpen(false);
   }
 
+  function getAgeFromDob(value: string) {
+    const birth = new Date(value);
+    const today = new Date();
+
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -94,31 +130,60 @@ export default function ForMembersPage() {
     const name = fullName.trim();
     const em = email.trim().toLowerCase();
     const ph = phone.trim();
+    const cleanDob = dob.trim();
+    const cleanCdh = cdhNumber.trim();
+    const cleanHandicap = handicap.trim();
 
     if (!name) return setError("Please enter your full name.");
     if (!em) return setError("Please enter your email.");
-    if (!password || password.length < 8) return setError("Password must be at least 8 characters.");
-    if (!clubQuery.trim()) return setError("Please enter your home club (start typing and select).");
-    if (!fee1.trim() || isNaN(Number(fee1))) return setError("Enter a valid fee for 1 guest.");
-    if (!fee2.trim() || isNaN(Number(fee2))) return setError("Enter a valid fee for 2 guests.");
+    if (!password || password.length < 8) {
+      return setError("Password must be at least 8 characters.");
+    }
+    if (!cleanDob) return setError("Please enter your date of birth.");
+    if (!clubQuery.trim()) {
+      return setError("Please enter your home club and select it from the list.");
+    }
+    if (!cleanCdh) return setError("Please enter your CDH number.");
+    if (!cleanHandicap) return setError("Please enter your handicap.");
+
+    const handicapNumber = Number(cleanHandicap);
+    if (Number.isNaN(handicapNumber)) {
+      return setError("Handicap must be a valid number.");
+    }
+    if (handicapNumber < 0 || handicapNumber > 54) {
+      return setError("Handicap must be between 0 and 54.");
+    }
+
+    const age = getAgeFromDob(cleanDob);
+    if (Number.isNaN(age) || age < 18) {
+      return setError("Members must be at least 18 years old.");
+    }
+
+    if (!fee1.trim() || Number.isNaN(Number(fee1))) {
+      return setError("Enter a valid host fee for 1 guest.");
+    }
+
+    if (!fee2.trim() || Number.isNaN(Number(fee2))) {
+      return setError("Enter a valid host fee for 2 guests.");
+    }
 
     setLoading(true);
 
     try {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: em,
-        password,
-        options: {
-          data: { full_name: name },
-        },
-      });
+      const { data: signUpData, error: signUpError } =
+        await supabase.auth.signUp({
+          email: em,
+          password,
+          options: {
+            data: { full_name: name },
+          },
+        });
 
       if (signUpError) throw signUpError;
 
       const userId = signUpData.user?.id;
       if (!userId) throw new Error("Sign up succeeded but no user id returned.");
 
-      // Insert profile
       const { error: profileError } = await supabase.from("profiles").insert({
         id: userId,
         role: "host",
@@ -127,10 +192,11 @@ export default function ForMembersPage() {
         full_name: name,
         email: em,
         phone: ph || null,
+        dob: cleanDob,
         home_club_name: homeClubName || clubQuery.trim(),
         home_club_id: homeClubId,
-        handicap: handicap.trim() ? Number(handicap) : null,
-        cdh_number: cdhNumber.trim() || null,
+        handicap: handicapNumber,
+        cdh_number: cleanCdh,
         host_fee_1: Number(fee1),
         host_fee_2: Number(fee2),
         notes: notes.trim() || null,
@@ -149,9 +215,12 @@ export default function ForMembersPage() {
   return (
     <main className="min-h-screen bg-[#0b221b] text-white">
       <div className="mx-auto max-w-3xl px-6 py-14">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Club Member Registration</h1>
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Club Member Registration
+        </h1>
         <p className="mt-3 text-white/70">
-          Members join free. Hosting is optional. We verify membership, standards and suitability to protect clubs.
+          Members join free. Hosting is optional. We verify membership, standards
+          and suitability to protect clubs.
         </p>
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
@@ -163,7 +232,7 @@ export default function ForMembersPage() {
 
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Full name">
+              <Field label="Full name *">
                 <input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -183,7 +252,7 @@ export default function ForMembersPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Email">
+              <Field label="Email *">
                 <input
                   type="email"
                   value={email}
@@ -193,7 +262,7 @@ export default function ForMembersPage() {
                 />
               </Field>
 
-              <Field label="Password">
+              <Field label="Password *">
                 <input
                   type="password"
                   value={password}
@@ -204,8 +273,27 @@ export default function ForMembersPage() {
               </Field>
             </div>
 
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Date of birth *">
+                <input
+                  type="date"
+                  value={dob}
+                  max={todayMaxDob}
+                  onChange={(e) => setDob(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
+                />
+              </Field>
+
+              <Field label="Age shown publicly">
+                <div className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white/70">
+                  Your exact date of birth stays private. Guests will only see
+                  your age band.
+                </div>
+              </Field>
+            </div>
+
             <div ref={clubWrapRef} className="relative">
-              <Field label="Home club (start typing, then select)">
+              <Field label="Home club * (start typing, then select)">
                 <input
                   value={clubQuery}
                   onChange={(e) => {
@@ -224,7 +312,10 @@ export default function ForMembersPage() {
               {clubOpen && clubResults.length > 0 && (
                 <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#061f18]/95 shadow-2xl backdrop-blur">
                   {clubResults.map((c) => {
-                    const meta = [c.town, c.region, c.country].filter(Boolean).join(", ");
+                    const meta = [c.town, c.region, c.country]
+                      .filter(Boolean)
+                      .join(", ");
+
                     return (
                       <button
                         key={c.id}
@@ -234,7 +325,11 @@ export default function ForMembersPage() {
                         className="w-full px-4 py-3 text-left hover:bg-white/5"
                       >
                         <div className="text-sm text-white/90">{c.name}</div>
-                        {meta ? <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/50">{meta}</div> : null}
+                        {meta ? (
+                          <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/50">
+                            {meta}
+                          </div>
+                        ) : null}
                       </button>
                     );
                   })}
@@ -243,8 +338,12 @@ export default function ForMembersPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Handicap (optional)">
+              <Field label="Handicap *">
                 <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="54"
                   value={handicap}
                   onChange={(e) => setHandicap(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
@@ -252,7 +351,7 @@ export default function ForMembersPage() {
                 />
               </Field>
 
-              <Field label="CDH number (optional)">
+              <Field label="CDH number *">
                 <input
                   value={cdhNumber}
                   onChange={(e) => setCdhNumber(e.target.value)}
@@ -263,7 +362,7 @@ export default function ForMembersPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Your host fee for 1 guest (GBP)">
+              <Field label="Your host fee for 1 guest (GBP) *">
                 <input
                   value={fee1}
                   onChange={(e) => setFee1(e.target.value)}
@@ -271,7 +370,7 @@ export default function ForMembersPage() {
                 />
               </Field>
 
-              <Field label="Your host fee for 2 guests (GBP)">
+              <Field label="Your host fee for 2 guests (GBP) *">
                 <input
                   value={fee2}
                   onChange={(e) => setFee2(e.target.value)}
@@ -290,7 +389,8 @@ export default function ForMembersPage() {
             </Field>
 
             <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
-              By applying, you confirm you will host only in line with your club’s rules and you accept responsibility for guest conduct.
+              By applying, you confirm you will host only in line with your
+              club’s rules and you accept responsibility for guest conduct.
             </div>
 
             <button
@@ -298,7 +398,9 @@ export default function ForMembersPage() {
               disabled={loading}
               className={cx(
                 "w-full rounded-xl px-4 py-3 text-sm font-semibold transition",
-                loading ? "bg-white/10 text-white/60" : "bg-[#d8b35a] text-[#041b14] hover:brightness-110"
+                loading
+                  ? "bg-white/10 text-white/60"
+                  : "bg-[#d8b35a] text-[#041b14] hover:brightness-110"
               )}
             >
               {loading ? "Submitting…" : "Submit application"}
@@ -310,10 +412,18 @@ export default function ForMembersPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
-      <div className="mb-2 text-xs uppercase tracking-[0.22em] text-white/60">{label}</div>
+      <div className="mb-2 text-xs uppercase tracking-[0.22em] text-white/60">
+        {label}
+      </div>
       {children}
     </label>
   );
