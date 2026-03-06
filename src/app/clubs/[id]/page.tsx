@@ -41,7 +41,6 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
       ? `https://${c.website}`
       : null;
 
-  // Load hosts for this club, including profile fields
   const { data: hostRows } = await supabase
     .from("host_profiles")
     .select(
@@ -54,51 +53,30 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
       guest_green_fee_gbp,
       profiles:profiles (
         full_name,
-        handicap_index
+        handicap,
+        dob
       )
     `
     )
     .eq("club_id", params.id);
 
   const hosts =
-  (hostRows ?? []).map((h: any) => ({
-    host_profile_id: h.id,
-    hosted_rounds: h.hosted_rounds ?? 0,
-    rehost_rate: h.rehost_rate ?? 0,
-    is_accepting: h.is_accepting ?? false,
-    hosting_fee_gbp: h.hosting_fee_gbp ?? 0,
-    guest_green_fee_gbp: h.guest_green_fee_gbp ?? 0,
-    handicap: h.profiles?.handicap_index ?? null,
-    full_name: h.profiles?.full_name ?? null
-  }));
-    (hostRows || []).map((h: any) => ({
+    (hostRows ?? []).map((h: any) => ({
       host_profile_id: h.id,
       hosted_rounds: h.hosted_rounds ?? 0,
-      rehost_rate:
-        h.rehost_rate === null || h.rehost_rate === undefined
-          ? null
-          : Number(h.rehost_rate),
-      is_accepting: h.is_accepting ?? true,
-      hosting_fee_gbp:
-        h.hosting_fee_gbp === null || h.hosting_fee_gbp === undefined
-          ? null
-          : Number(h.hosting_fee_gbp),
-      guest_green_fee_gbp:
-        h.guest_green_fee_gbp === null || h.guest_green_fee_gbp === undefined
-          ? null
-          : Number(h.guest_green_fee_gbp),
+      rehost_rate: h.rehost_rate ?? 0,
+      is_accepting: h.is_accepting ?? false,
+      hosting_fee_gbp: h.hosting_fee_gbp ?? 0,
+      guest_green_fee_gbp: h.guest_green_fee_gbp ?? 0,
+      handicap: h.profiles?.handicap ?? null,
+      dob: h.profiles?.dob ?? null,
       full_name: h.profiles?.full_name ?? null,
-      handicap_index:
-        h.profiles?.handicap_index === null || h.profiles?.handicap_index === undefined
-          ? null
-          : Number(h.profiles?.handicap_index),
     })) || [];
 
   return (
     <main className="min-h-screen bg-[#071e17] text-white">
       <SiteHeader />
 
-      {/* HERO */}
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="relative h-[260px] w-full">
           <Image
@@ -152,9 +130,8 @@ export default async function ClubPage({ params }: { params: { id: string } }) {
         </div>
       </section>
 
-      {/* CONTENT */}
       <div className="mx-auto max-w-6xl px-6 -mt-10 pb-16">
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
           <div className="p-6 md:p-8">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
