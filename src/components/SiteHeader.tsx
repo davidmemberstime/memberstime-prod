@@ -112,6 +112,7 @@ export default function SiteHeader() {
             How It Works
           </Link>
 
+          <Link href="/matchplay" className={navLinkClass(pathname?.startsWith("/matchplay") ?? false)}>Match Play</Link>
           <Link
             href="/trust"
             className={navLinkClass(pathname?.startsWith("/trust") ?? false)}
