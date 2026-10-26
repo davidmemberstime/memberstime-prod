@@ -11,10 +11,10 @@ export default function HomePage() {
         {/* Background Image */}
         <Image
           src="/home-hero.jpg"
-          alt="Golf course"
+          alt="Championship golf course landscape"
           fill
           priority
-          className="object-cover brightness-[1.15]"
+          className="object-cover object-center"
         />
 
         {/* Softer Overlay */}
@@ -34,8 +34,8 @@ export default function HomePage() {
 
           {/* Headline */}
           <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
-            A hosted golf experience,
-            delivered with respect
+            A private golf network,
+            built on trust and reciprocity
           </h1>
 
           {/* Subtext */}
@@ -49,10 +49,10 @@ export default function HomePage() {
           <div className="mt-8 flex flex-wrap justify-center gap-4">
 
             <Link
-              href="/browse"
+              href="/apply"
               className="rounded-full bg-[#d4af37] px-6 py-3 text-black font-semibold hover:brightness-110 transition"
             >
-              Browse clubs
+              Apply for membership
             </Link>
 
             <Link
