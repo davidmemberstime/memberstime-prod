@@ -1,488 +1,57 @@
 "use client";
-
-import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
-
-type Tier = "Curated" | "Prestigious";
-type Mode = "recommended" | "all" | "curated";
-
-type ClubRow = {
-  id: string;
-  name: string;
-  region: string | null;
-  country: string | null;
-  tier: Tier | null;
-  guests_max: number | null;
-  clubhouse_contribution_gbp: number | null;
-  host_profiles?: { count: number }[] | null;
-};
-
-function formatLocation(region: string | null, country: string | null) {
-  const r = (region || "").trim();
-  const c = (country || "").trim();
-  if (r && c) return `${r}, ${c}`;
-  return r || c || "";
-}
-
-function normaliseClubKey(name: string) {
-  return (
-    name
-      .toLowerCase()
-      .trim()
-      .replace(/&/g, " and ")
-      .replace(/['’]/g, "")
-      .replace(/[^a-z0-9\s]/g, " ")
-      .replace(/\bthe\b/g, " ")
-      .replace(/\bgolf\s*&\s*country\s*club\b/g, " ")
-      .replace(/\bgolf\s*and\s*country\s*club\b/g, " ")
-      .replace(/\bcountry\s*club\b/g, " ")
-      .replace(/\bgolf\s*club\b/g, " ")
-      .replace(/\bgolf\b/g, " ")
-      .replace(/\bg\.?\s*c\.?\b/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-  );
-}
-
-function chooseBestCandidate(candidates: ClubRow[]) {
-  const score = (n: string) => {
-    const s = n.toLowerCase();
-    let pts = 0;
-    if (/\bgolf\s*club\b/.test(s)) pts += 50;
-    else if (/\bgolf\b/.test(s)) pts += 30;
-    if (/\bg\.?\s*c\.?\b/.test(s)) pts += 20;
-    pts += Math.min(n.length, 60);
-    return pts;
-  };
-
-  return [...candidates].sort((a, b) => score(b.name) - score(a.name))[0];
-}
-
-const COUNTRY_OPTIONS = [
-  "All locations",
-  "England",
-  "Scotland",
-  "Wales",
-  "Northern Ireland",
-  "Ireland",
+import {useMemo,useState} from "react";
+import Link from "next/link";
+type Club={name:string;location:string;country:string};
+const clubs:Club[]=[
+{name:"Royal County Down",location:"Newcastle, County Down",country:"Northern Ireland"},
+{name:"Royal Portrush",location:"Portrush, County Antrim",country:"Northern Ireland"},
+{name:"St Andrews — Old Course",location:"St Andrews, Fife",country:"Scotland"},
+{name:"Muirfield",location:"Gullane, East Lothian",country:"Scotland"},
+{name:"Royal Dornoch",location:"Dornoch, Highlands",country:"Scotland"},
+{name:"Carnoustie Golf Links",location:"Carnoustie, Angus",country:"Scotland"},
+{name:"Kingsbarns Golf Links",location:"Kingsbarns, Fife",country:"Scotland"},
+{name:"North Berwick Golf Club",location:"North Berwick, East Lothian",country:"Scotland"},
+{name:"Trump Turnberry — Ailsa",location:"Turnberry, Ayrshire",country:"Scotland"},
+{name:"Royal Troon",location:"Troon, Ayrshire",country:"Scotland"},
+{name:"Royal Birkdale",location:"Southport, Merseyside",country:"England"},
+{name:"Sunningdale — Old",location:"Ascot, Berkshire",country:"England"},
+{name:"Sunningdale — New",location:"Ascot, Berkshire",country:"England"},
+{name:"Wentworth — West",location:"Virginia Water, Surrey",country:"England"},
+{name:"The Berkshire — Red",location:"Ascot, Berkshire",country:"England"},
+{name:"The Berkshire — Blue",location:"Ascot, Berkshire",country:"England"},
+{name:"Sw inley Forest".replace(" ",""),location:"Ascot, Berkshire",country:"England"},
+{name:"Walton Heath — Old",location:"Tadworth, Surrey",country:"England"},
+{name:"Walton Heath — New",location:"Tadworth, Surrey",country:"England"},
+{name:"St George's Hill",location:"Weybridge, Surrey",country:"England"},
+{name:"Queenwood",location:"Ottershaw, Surrey",country:"England"},
+{name:"Royal St George's",location:"Sandwich, Kent",country:"England"},
+{name:"Royal Cinque Ports",location:"Deal, Kent",country:"England"},
+{name:"Prince's Golf Club",location:"Sandwich, Kent",country:"England"},
+{name:"Hankley Common",location:"Farnham, Surrey",country:"England"},
+{name:"Hindhead Golf Club",location:"Hindhead, Surrey",country:"England"},
+{name:"West Sussex Golf Club",location:"Pulborough, West Sussex",country:"England"},
+{name:"Goodwood — Downs",location:"Chichester, West Sussex",country:"England"},
+{name:"Parkstone Golf Club",location:"Poole, Dorset",country:"England"},
+{name:"Broadstone Golf Club",location:"Broadstone, Dorset",country:"England"},
+{name:"Ferndown Golf Club",location:"Ferndown, Dorset",country:"England"},
+{name:"Remedy Oak Golf Club",location:"Woodlands, Dorset",country:"England"},
+{name:"Isle of Purbeck Golf Club",location:"Studland, Dorset",country:"England"},
+{name:"Stoneham Golf Club",location:"Southampton, Hampshire",country:"England"},
+{name:"Liphook Golf Club",location:"Liphook, Hampshire",country:"England"},
+{name:"Hayling Golf Club",location:"Hayling Island, Hampshire",country:"England"},
+{name:"Royal Liverpool",location:"Hoylake, Merseyside",country:"England"},
+{name:"Hillside Golf Club",location:"Southport, Merseyside",country:"England"},
+{name:"Formby Golf Club",location:"Formby, Merseyside",country:"England"},
+{name:"Woodhall Spa — Hotchkin",location:"Woodhall Spa, Lincolnshire",country:"England"},
+{name:"Woburn — Marquess",location:"Milton Keynes, Buckinghamshire",country:"England"},
+{name:"The Grove",location:"Chandler's Cross, Hertfordshire",country:"England"},
+{name:"Celtic Manor — Twenty Ten",location:"Newport, South Wales",country:"Wales"},
+{name:"Royal Porthcawl",location:"Porthcawl, Bridgend",country:"Wales"},
+{name:"Pennard Golf Club",location:"Southgate, Swansea",country:"Wales"},
+{name:"Lahinch Golf Club",location:"Lahinch, County Clare",country:"Ireland"},
+{name:"Ballybunion — Old",location:"Ballybunion, County Kerry",country:"Ireland"},
+{name:"Waterville Golf Links",location:"Waterville, County Kerry",country:"Ireland"},
+{name:"Portmarnock Golf Club",location:"Portmarnock, County Dublin",country:"Ireland"},
+{name:"The European Club",location:"Brittas Bay, County Wicklow",country:"Ireland"}
 ];
-
-type MenuPos = { top: number; left: number; width: number } | null;
-
-export default function BrowsePage() {
-  const [clubs, setClubs] = useState<ClubRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-
-  const [query, setQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-
-  const [countryFilter, setCountryFilter] = useState<string>("All locations");
-  const [mode, setMode] = useState<Mode>("recommended");
-
-  const [countryMenuOpen, setCountryMenuOpen] = useState(false);
-  const [modeMenuOpen, setModeMenuOpen] = useState(false);
-
-  const [countryMenuPos, setCountryMenuPos] = useState<MenuPos>(null);
-  const [modeMenuPos, setModeMenuPos] = useState<MenuPos>(null);
-
-  const searchBoxRef = useRef<HTMLDivElement | null>(null);
-
-  const countryBtnRef = useRef<HTMLButtonElement | null>(null);
-  const modeBtnRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setErr(null);
-
-      const { data, error } = await supabase
-        .from("clubs")
-        .select(
-          `
-          id,
-          name,
-          region,
-          country,
-          tier,
-          guests_max,
-          clubhouse_contribution_gbp,
-          host_profiles(count)
-        `
-        )
-        .order("name", { ascending: true });
-
-      if (error) setErr(error.message);
-      else setClubs((data as ClubRow[]) || []);
-
-      setLoading(false);
-    }
-
-    load();
-  }, []);
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    function onPointerDown(e: PointerEvent) {
-      const t = e.target as Node;
-
-      if (searchBoxRef.current && !searchBoxRef.current.contains(t)) {
-        setIsOpen(false);
-      }
-
-      // If clicking inside either menu button, ignore (we handle toggles)
-      if (countryBtnRef.current?.contains(t) || modeBtnRef.current?.contains(t))
-        return;
-
-      // If clicking inside the open menus, ignore
-      const countryMenuEl = document.getElementById("country-menu");
-      const modeMenuEl = document.getElementById("mode-menu");
-      if (countryMenuEl?.contains(t) || modeMenuEl?.contains(t)) return;
-
-      setCountryMenuOpen(false);
-      setModeMenuOpen(false);
-    }
-
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, []);
-
-  // Reposition menus on scroll/resize if open
-  useEffect(() => {
-    function updatePositions() {
-      if (countryMenuOpen && countryBtnRef.current) {
-        const r = countryBtnRef.current.getBoundingClientRect();
-        setCountryMenuPos({
-          top: r.bottom + 8,
-          left: r.left,
-          width: r.width,
-        });
-      }
-      if (modeMenuOpen && modeBtnRef.current) {
-        const r = modeBtnRef.current.getBoundingClientRect();
-        setModeMenuPos({
-          top: r.bottom + 8,
-          left: r.left,
-          width: r.width,
-        });
-      }
-    }
-
-    if (countryMenuOpen || modeMenuOpen) updatePositions();
-
-    window.addEventListener("scroll", updatePositions, true);
-    window.addEventListener("resize", updatePositions);
-    return () => {
-      window.removeEventListener("scroll", updatePositions, true);
-      window.removeEventListener("resize", updatePositions);
-    };
-  }, [countryMenuOpen, modeMenuOpen]);
-
-  const suggestions = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-
-    const matches = clubs.filter((c) => c.name.toLowerCase().includes(q));
-
-    const groups = new Map<string, ClubRow[]>();
-    for (const m of matches) {
-      const key = normaliseClubKey(m.name) || m.name.toLowerCase();
-      const arr = groups.get(key);
-      if (arr) arr.push(m);
-      else groups.set(key, [m]);
-    }
-
-    const deduped = Array.from(groups.values()).map(chooseBestCandidate);
-    deduped.sort((a, b) => a.name.localeCompare(b.name));
-
-    return deduped.slice(0, 8);
-  }, [query, clubs]);
-
-  const firstSuggestion = suggestions[0];
-
-  const filteredClubs = useMemo(() => {
-    let list = clubs;
-
-    if (mode === "recommended") {
-      list = list.filter((c) => c.tier === "Prestigious");
-    } else if (mode === "curated") {
-      list = list.filter((c) => c.tier === "Curated");
-    }
-
-    if (countryFilter !== "All locations") {
-      const target = countryFilter.toLowerCase();
-      list = list.filter((c) => (c.country || "").toLowerCase() === target);
-    }
-
-    const hostCount = (c: ClubRow) => c.host_profiles?.[0]?.count ?? 0;
-
-    list = [...list].sort((a, b) => {
-      if (mode === "recommended") {
-        const ha = hostCount(a);
-        const hb = hostCount(b);
-        if (hb !== ha) return hb - ha;
-      }
-      return a.name.localeCompare(b.name);
-    });
-
-    return list;
-  }, [clubs, mode, countryFilter]);
-
-  const modeLabel =
-    mode === "recommended"
-      ? "Recommended (Prestigious)"
-      : mode === "all"
-      ? "All clubs"
-      : "Curated only";
-
-  return (
-    <main className="min-h-screen bg-[#0b221b] text-white">
-      {/* HERO */}
-      <section className="relative w-full overflow-hidden border-b border-white/10">
-        <div className="relative h-[340px] w-full">
-          <Image
-            src="/home-hero.jpg"
-            alt="Members Time"
-            fill
-            priority
-            className="object-cover brightness-[0.82]"
-          />
-          <div className="absolute inset-0 bg-black/25 pointer-events-none" />
-        </div>
-
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="mx-auto w-full max-w-7xl px-6 text-center">
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
-              Browse clubs
-            </h1>
-
-            <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf
-              clubs.
-            </p>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              {/* Search */}
-              <div ref={searchBoxRef} className="relative w-[360px] max-w-full">
-                <input
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setIsOpen(true);
-                  }}
-                  onFocus={() => setIsOpen(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && firstSuggestion) {
-                      e.preventDefault();
-                      window.location.href = `/clubs/${encodeURIComponent(
-                        firstSuggestion.id
-                      )}`;
-                    }
-                    if (e.key === "Escape") setIsOpen(false);
-                  }}
-                  placeholder="Search clubs"
-                  className="w-full rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-sm backdrop-blur outline-none focus:border-white/40"
-                />
-
-                {isOpen && suggestions.length > 0 && (
-                  <div className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl">
-                    {suggestions.map((club) => (
-                      <a
-                        key={club.id}
-                        href={`/clubs/${encodeURIComponent(club.id)}`}
-                        className="block w-full px-4 py-3 text-left hover:bg-white/10"
-                      >
-                        <div className="text-sm font-medium">{club.name}</div>
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Locations button (menu rendered as fixed below) */}
-              <button
-                ref={countryBtnRef}
-                onClick={() => {
-                  setModeMenuOpen(false);
-
-                  setCountryMenuOpen((v) => {
-                    const next = !v;
-                    if (next && countryBtnRef.current) {
-                      const r = countryBtnRef.current.getBoundingClientRect();
-                      setCountryMenuPos({
-                        top: r.bottom + 8,
-                        left: r.left,
-                        width: r.width,
-                      });
-                    }
-                    return next;
-                  });
-                }}
-                className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
-              >
-                {countryFilter}
-              </button>
-
-              {/* Recommended button (menu rendered as fixed below) */}
-              <button
-                ref={modeBtnRef}
-                onClick={() => {
-                  setCountryMenuOpen(false);
-
-                  setModeMenuOpen((v) => {
-                    const next = !v;
-                    if (next && modeBtnRef.current) {
-                      const r = modeBtnRef.current.getBoundingClientRect();
-                      setModeMenuPos({
-                        top: r.bottom + 8,
-                        left: r.left,
-                        width: r.width,
-                      });
-                    }
-                    return next;
-                  });
-                }}
-                className="rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
-              >
-                {modeLabel}
-              </button>
-            </div>
-
-            <p className="mt-4 text-xs text-white/55">
-              Showing{" "}
-              <span className="text-white/80 font-semibold">
-                {filteredClubs.length}
-              </span>{" "}
-              clubs
-              {mode === "recommended" ? " (Prestigious)" : ""}
-              {countryFilter !== "All locations" ? ` in ${countryFilter}` : ""}.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ✅ FIXED MENUS (cannot be clipped by hero / grid) */}
-      {countryMenuOpen && countryMenuPos && (
-        <div
-          id="country-menu"
-          className="fixed z-[9999] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl"
-          style={{
-            top: countryMenuPos.top,
-            left: countryMenuPos.left,
-            minWidth: Math.max(countryMenuPos.width, 220),
-          }}
-        >
-          <div className="max-h-[360px] overflow-y-auto">
-            {COUNTRY_OPTIONS.map((c) => (
-              <button
-                key={c}
-                onClick={() => {
-                  setCountryFilter(c);
-                  setCountryMenuOpen(false);
-                }}
-                className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                  c === countryFilter ? "bg-white/10" : ""
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {modeMenuOpen && modeMenuPos && (
-        <div
-          id="mode-menu"
-          className="fixed z-[9999] overflow-hidden rounded-xl border border-white/10 bg-[#0b2a1f] shadow-2xl"
-          style={{
-            top: modeMenuPos.top,
-            left: modeMenuPos.left,
-            minWidth: Math.max(modeMenuPos.width, 260),
-          }}
-        >
-          <div className="max-h-[360px] overflow-y-auto">
-            <button
-              onClick={() => {
-                setMode("recommended");
-                setModeMenuOpen(false);
-              }}
-              className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                mode === "recommended" ? "bg-white/10" : ""
-              }`}
-            >
-              Recommended (Prestigious)
-            </button>
-
-            <button
-              onClick={() => {
-                setMode("all");
-                setModeMenuOpen(false);
-              }}
-              className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                mode === "all" ? "bg-white/10" : ""
-              }`}
-            >
-              All clubs
-            </button>
-
-            <button
-              onClick={() => {
-                setMode("curated");
-                setModeMenuOpen(false);
-              }}
-              className={`block w-full px-4 py-3 text-left text-sm hover:bg-white/10 ${
-                mode === "curated" ? "bg-white/10" : ""
-              }`}
-            >
-              Curated only
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* GRID */}
-      <div className="mx-auto max-w-7xl px-6 -mt-10 pb-12">
-        {loading && <p className="text-white/70">Loading clubs…</p>}
-        {err && <p className="text-red-400">{err}</p>}
-
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
-          {filteredClubs.map((c) => {
-            const location = formatLocation(c.region, c.country);
-            const hostsAvailable = c.host_profiles?.[0]?.count ?? 0;
-
-            return (
-              <div
-                key={c.id}
-                className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 hover:bg-white/10 transition"
-              >
-                <div className="text-lg font-semibold">{c.name}</div>
-                <div className="mt-1 text-sm text-white/70">{location}</div>
-
-                <div className="mt-4 space-y-2 text-sm">
-                  <div className="text-white/80">
-                    👤 <span className="font-semibold">{hostsAvailable}</span>{" "}
-                    hosts available
-                  </div>
-
-                  <div className="text-white/80">
-                    <div className="text-white/60 text-xs">Contribution</div>
-                    <div className="font-semibold">£20</div>
-                  </div>
-                </div>
-
-                <a
-                  href={`/clubs/${encodeURIComponent(c.id)}`}
-                  className="mt-5 block w-full text-center rounded-xl bg-[#d8b35a] px-4 py-2 text-sm font-semibold text-[#041b14] hover:brightness-110"
-                >
-                  View hosts
-                </a>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </main>
-  );
-}
+export default function BrowsePage(){const [query,setQuery]=useState("");const [country,setCountry]=useState("All");const shown=useMemo(()=>clubs.filter(c=>(country==="All"||c.country===country)&&(`${c.name} ${c.location}`.toLowerCase().includes(query.toLowerCase()))).sort((a,b)=>a.name.localeCompare(b.name)),[query,country]);return <main className="min-h-screen bg-[#071d16] px-6 py-16 text-white"><div className="mx-auto max-w-6xl"><p className="text-xs uppercase tracking-[0.3em] text-[#d8b35a]">The Members Time club directory</p><h1 className="mt-4 text-4xl font-semibold md:text-6xl">Exceptional clubs. A shared passion.</h1><p className="mt-6 max-w-3xl leading-8 text-white/75">Explore a starting selection of renowned clubs across Britain and Ireland. This is a curated reference directory, not a verified top-100 ranking or a list of participating clubs. Membership eligibility and club participation are subject to confirmation.</p><div className="mt-10 flex flex-wrap gap-4"><input aria-label="Search clubs" placeholder="Search clubs or locations" value={query} onChange={e=>setQuery(e.target.value)} className="min-w-[230px] flex-1 rounded-xl border border-white/20 bg-white/5 px-5 py-3 outline-none focus:border-[#d8b35a]"/><select aria-label="Filter by country" value={country} onChange={e=>setCountry(e.target.value)} className="rounded-xl border border-white/20 bg-[#12382a] px-5 py-3">{["All","England","Scotland","Wales","Northern Ireland","Ireland"].map(c=><option key={c}>{c}</option>)}</select></div><p className="mt-5 text-sm text-white/60">{shown.length} clubs and courses shown</p><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{shown.map(c=><article key={c.name} className="rounded-xl border border-white/10 bg-white/[0.035] p-6"><h2 className="text-xl font-semibold">{c.name}</h2><p className="mt-2 text-sm text-white/65">{c.location}</p><p className="mt-5 text-xs uppercase tracking-widest text-[#d8b35a]">{c.country}</p></article>)}</div>{shown.length===0&&<p className="mt-8 text-white/70">No clubs match that search. Try another name or location.</p>}<div className="mt-12 rounded-xl border border-[#d8b35a]/30 p-7"><h2 className="text-xl font-semibold">Belong to a club not listed?</h2><p className="mt-3 text-white/70">The directory is a starting selection and will be expanded and verified. Club inclusion does not imply an affiliation with Members Time.</p><Link href="/membership" className="mt-5 inline-flex rounded-full bg-[#d8b35a] px-6 py-3 font-semibold text-[#071d16]">About membership</Link></div></div></main>}
