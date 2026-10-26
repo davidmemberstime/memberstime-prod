@@ -14,8 +14,8 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#071e16]/75 via-[#0c291f]/50 to-[#0c291f]/85" />
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-28 text-center text-white">
         <Image src="/memberstime-headerlogo.png" alt="Members Time" width={240} height={240} className="mx-auto mb-8 h-40 w-auto object-contain md:h-48" priority />
-        <p className="mb-7 text-xs uppercase tracking-[0.38em] text-[#e6c77e]">An exclusive, members-only golf network</p>
-        <h1 className="font-serif text-5xl font-normal leading-[1.13] tracking-tight md:text-7xl">The privilege of belonging.<br /><span className="text-[#eed69c]">The pleasure of playing elsewhere.</span></h1>
+        <p className="mb-7 text-xs uppercase tracking-[0.38em] text-[#e6c77e]">A private golfing society</p>
+        <h1 className="font-serif text-5xl font-normal leading-[1.13] tracking-tight md:text-7xl">The art of belonging.<br /><span className="text-[#eed69c]">The freedom to explore.</span></h1>
         <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-white/85">An exclusive golfing network for verified members of qualifying Top 100 and similarly prestigious private golf clubs. Make new connections and explore opportunities to play beyond your home course.</p>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Link href="/membership" className="rounded-full bg-[#d8b35a] px-8 py-3.5 font-semibold text-[#071d16] hover:brightness-110">Explore membership</Link>
@@ -27,13 +27,13 @@ export default function HomePage() {
     <section className="border-b border-[#dfd6c5] bg-[#f7f4ec] px-6 py-24">
       <div className="mx-auto grid max-w-6xl items-center gap-16 lg:grid-cols-[1.1fr_0.9fr]">
         <div><p className="text-xs font-semibold uppercase tracking-[0.32em] text-[#98732e]">A private world of golf</p>
-          <h2 className="mt-6 max-w-2xl font-serif text-4xl leading-tight md:text-6xl">Exceptional clubs. Genuine connections.</h2>
+          <h2 className="mt-6 max-w-2xl font-serif text-4xl leading-tight md:text-6xl">Extraordinary courses. Enduring friendships.</h2>
           <div className="mt-7 h-px w-24 bg-[#b6954f]" />
           <p className="mt-8 max-w-xl text-lg leading-9 text-[#40564b]">Members Time is an exclusive community for verified members of qualifying Top 100 and similarly prestigious private golf clubs.</p>
           <p className="mt-5 max-w-xl leading-8 text-[#40564b]">Discover like-minded golfers, build lasting friendships and explore the pleasure of playing together beyond your home course.</p>
           <Link href="/membership" className="mt-9 inline-flex items-center border-b border-[#b6954f] pb-2 text-sm font-semibold uppercase tracking-[0.16em] text-[#17392c]">Explore membership <span className="ml-3">→</span></Link>
         </div>
-        <div className="relative overflow-hidden rounded-t-[12rem] border-[7px] border-white shadow-2xl shadow-[#17392c]/15">
+        <div className="relative overflow-hidden border border-white shadow-2xl shadow-[#17392c]/15">
           <Image src="/home-hero.jpg" alt="Golf course landscape" width={850} height={1000} className="aspect-[4/5] w-full object-cover" />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#102c21]/85 to-transparent px-8 pb-9 pt-24 text-white"><p className="text-xs uppercase tracking-[0.24em] text-[#eed69c]">Membership by application</p><p className="mt-2 font-serif text-2xl">A more personal way to play.</p></div>
         </div>
@@ -42,7 +42,7 @@ export default function HomePage() {
     <section className="bg-[#fffdf8] px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <p className="text-center text-xs font-semibold uppercase tracking-[0.32em] text-[#98732e]">The Members Time experience</p>
-        <h2 className="mx-auto mt-5 max-w-3xl text-center font-serif text-4xl md:text-6xl">The pleasure of belonging.</h2>
+        <h2 className="mx-auto mt-5 max-w-3xl text-center font-serif text-4xl md:text-6xl">An invitation to something exceptional.</h2>
         <p className="mx-auto mt-6 max-w-2xl text-center leading-8 text-[#52655a]">Thoughtful introductions, shared experiences and a genuine respect for the traditions of every club.</p>
         <div className="mt-14 grid gap-6 md:grid-cols-3">
           {features.map(([title,body],i)=><article key={title} className="group border border-[#e4ddcf] bg-[#f7f4ec] px-8 py-10 shadow-sm transition-shadow hover:shadow-xl">
@@ -62,7 +62,7 @@ export default function HomePage() {
     </section>
     <section className="bg-[#f6f3eb] px-6 py-24 text-[#17392c]">
       <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="relative overflow-hidden rounded-[2rem] border border-[#d9c9a8] bg-[#e5e1d5] shadow-xl shadow-[#163a2a]/10">
+        <div className="relative overflow-hidden border border-[#d9c9a8] bg-[#e5e1d5] shadow-xl shadow-[#163a2a]/10">
           <Image src="/home-hero.jpg" alt="A golf course, representing the inspiration behind Members Time" width={900} height={1050} className="aspect-[4/5] w-full object-cover" />
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#102d22]/90 to-transparent px-7 pb-7 pt-20 text-sm tracking-wide text-white">The game that brings us together</div>
         </div>
