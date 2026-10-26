@@ -13,6 +13,7 @@ type ClubRow = {
   region: string | null;
   country: string | null;
   tier: Tier | null;
+  is_active: boolean;
   guests_max: number | null;
   clubhouse_contribution_gbp: number | null;
   host_profiles?: { count: number }[] | null;
@@ -106,11 +107,13 @@ export default function BrowsePage() {
           region,
           country,
           tier,
+          is_active,
           guests_max,
           clubhouse_contribution_gbp,
           host_profiles(count)
         `
         )
+        .eq("is_active", true)
         .order("name", { ascending: true });
 
       if (error) setErr(error.message);
@@ -258,7 +261,7 @@ export default function BrowsePage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf
+              Explore eligible golf clubs and discover participating member hosts at
               clubs.
             </p>
 
@@ -463,13 +466,10 @@ export default function BrowsePage() {
                 <div className="mt-4 space-y-2 text-sm">
                   <div className="text-white/80">
                     👤 <span className="font-semibold">{hostsAvailable}</span>{" "}
-                    hosts available
+                    registered hosts
                   </div>
 
-                  <div className="text-white/80">
-                    <div className="text-white/60 text-xs">Contribution</div>
-                    <div className="font-semibold">£20</div>
-                  </div>
+                  <div className="text-white/60 text-xs">Any fees and hosting arrangements are confirmed before booking.</div>
                 </div>
 
                 <a
