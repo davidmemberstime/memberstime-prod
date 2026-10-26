@@ -187,6 +187,7 @@ export default function SiteHeader() {
             How It Works
           </Link>
 
+          <Link href="/matchplay" className="hover:text-white transition-colors">Match Play</Link>
           <Link href="/trust" className="hover:text-white transition-colors">
             Trust
           </Link>
