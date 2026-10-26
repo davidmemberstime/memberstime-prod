@@ -3,9 +3,10 @@ import {useState} from "react";
 import Link from "next/link";
 import {supabase} from "@/lib/supabase/client";
 import {eligibleClubCandidates} from "@/lib/club-candidates";
+const excludedHomeClubs=new Set(["Bournemouth & Meyrick Park"]);
 export default function ApplyPage(){
  const [name,setName]=useState("");const [clubTouched,setClubTouched]=useState(false);const [club,setClub]=useState("");const [handicap,setHandicap]=useState("");const [days,setDays]=useState("");const [intro,setIntro]=useState("");const [hosting,setHosting]=useState("");const [busy,setBusy]=useState(false);const [error,setError]=useState("");const [success,setSuccess]=useState(false);const [existing,setExisting]=useState(false);
- const matches=club.trim().length>=2?eligibleClubCandidates.filter(c=>`${c.name} ${c.location} ${c.country}`.toLowerCase().includes(club.trim().toLowerCase())).slice(0,8):[];const selected=eligibleClubCandidates.find(c=>c.name.toLowerCase()===club.trim().toLowerCase());
+ const matches=club.trim().length>=2?eligibleClubCandidates.filter(c=>!excludedHomeClubs.has(c.name)).filter(c=>`${c.name} ${c.location} ${c.country}`.toLowerCase().includes(club.trim().toLowerCase())).slice(0,8):[];const selected=eligibleClubCandidates.find(c=>!excludedHomeClubs.has(c.name)&&c.name.toLowerCase()===club.trim().toLowerCase());
  async function submit(e:React.FormEvent){e.preventDefault();setError("");setBusy(true);try{if(!selected){setError("Please select a listed club from the suggestions. If your club is missing, contact us for an eligibility review.");return;}
  const {data:{user},error:authError}=await supabase.auth.getUser();if(authError||!user){setError("Please sign in or create an account before applying.");return;}
  if(!hosting){setError("Please tell us whether you would consider hosting.");return;}const h=handicap.trim()?Number(handicap):null;if(h!==null&&(!Number.isFinite(h)||h< -10||h>54)){setError("Enter a valid handicap index.");return;}
