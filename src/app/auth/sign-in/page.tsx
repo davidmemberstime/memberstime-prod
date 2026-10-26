@@ -29,21 +29,21 @@ export default function SignInPage() {
       .single();
 
     if (!profile) {
-      router.replace("/for-members/dashboard");
+      router.replace("/apply");
       return;
     }
 
     if (!profile.onboarding_complete) {
-      router.replace("/for-members/dashboard");
+      router.replace("/apply");
       return;
     }
 
     if (profile.verification_status === "verified") {
-      router.replace("/for-members/dashboard");
+      router.replace("/apply");
       return;
     }
 
-    router.replace("/for-members/dashboard");
+    router.replace("/apply");
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -188,17 +188,12 @@ export default function SignInPage() {
 
           <div className="mt-6 grid gap-3">
             <Link
-              href="/for-members"
+              href="/auth/sign-up"
               className="text-sm text-white/70 hover:text-white"
             >
-              I’m a club member (apply to host)
+              Create an account to apply
             </Link>
-            <Link
-              href="/for-guests"
-              className="text-sm text-white/70 hover:text-white"
-            >
-              I’m a guest (create a guest profile)
-            </Link>
+
           </div>
         </div>
       </div>
