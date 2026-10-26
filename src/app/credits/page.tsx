@@ -39,13 +39,13 @@ export default function CreditsPage() {
       {!wallet ? <p className="mt-8" role="status">{message}</p> : (
         <>
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border p-5"><p className="text-sm text-gray-600">Available</p><p className="mt-2 text-3xl font-semibold">{wallet.available.toFixed(1)}</p></div>
+            <div className="rounded-xl border p-5"><p className="text-sm text-gray-600">Estimated available*</p><p className="mt-2 text-3xl font-semibold">{wallet.available.toFixed(1)}</p></div>
             <div className="rounded-xl border p-5"><p className="text-sm text-gray-600">Reserved for bookings</p><p className="mt-2 text-3xl font-semibold">{wallet.held.toFixed(1)}</p></div>
             <div className="rounded-xl border p-5"><p className="text-sm text-gray-600">Total earned</p><p className="mt-2 text-3xl font-semibold">{wallet.earned.toFixed(1)}</p></div>
           </div>
           <p className="mt-6 text-sm text-gray-600">Hosting earns 1.5 credits per completed round, even with two visitors. Each visiting member uses 1 credit. You can earn up to 6 hosting credits per calendar month.</p>
           {wallet.protectedUntil && <p className="mt-4 text-sm">Host-cancellation protection recorded until {new Date(wallet.protectedUntil).toLocaleDateString("en-GB")}.</p>}
-          <p className="mt-4 text-xs text-gray-500">This is a provisional wallet display; final expiry-aware balances will be confirmed by the secure settlement service before bookings are activated.</p>
+          <p className="mt-4 text-xs text-gray-500">*Estimated only. Expiring credits and refunds are not fully reconciled yet. Do not rely on this figure for bookings; no credit transactions are enabled.</p>
         </>
       )}
     </main>
