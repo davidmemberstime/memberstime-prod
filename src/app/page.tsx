@@ -30,6 +30,23 @@ export default function HomePage() {
       <h2 className="mx-auto mt-5 max-w-3xl text-center text-3xl font-semibold md:text-5xl">One membership. A wider world of golf.</h2>
       <div className="mt-14 grid gap-6 md:grid-cols-3">{features.map(([title,body],i)=><article key={title} className="rounded-2xl border border-white/10 bg-white/[0.035] p-8"><p className="text-[#d8b35a]">0{i+1}</p><h3 className="mt-6 text-xl font-semibold">{title}</h3><p className="mt-4 leading-7 text-white/70">{body}</p></article>)}</div>
     </section>
+    <section className="bg-[#f6f3eb] px-6 py-24 text-[#17392c]">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="relative overflow-hidden rounded-[2rem] border border-[#d9c9a8] bg-[#e5e1d5] shadow-xl shadow-[#163a2a]/10">
+          <Image src="/home-hero.jpg" alt="A golf course, representing the inspiration behind Members Time" width={900} height={1050} className="aspect-[4/5] w-full object-cover" />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#102d22]/90 to-transparent px-7 pb-7 pt-20 text-sm tracking-wide text-white">The game that brings us together</div>
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[#98732e]">The story behind Members Time</p>
+          <h2 className="mt-5 max-w-xl font-serif text-4xl leading-tight md:text-5xl">Born from a love of the game.</h2>
+          <div className="mt-6 h-px w-20 bg-[#b6954f]" />
+          <p className="mt-7 max-w-xl text-lg leading-8 text-[#42564c]">Members Time began with a simple idea: belonging to a great golf club can be the beginning of golfing friendships that reach far beyond your home course.</p>
+          <p className="mt-5 max-w-xl leading-8 text-[#42564c]">Inspired by the enjoyment of playing at Parkstone and meeting golfers from other clubs, the network is designed to bring verified members of qualifying leading private clubs together through genuine introductions, shared rounds and mutual respect.</p>
+          <p className="mt-5 max-w-xl leading-8 text-[#42564c]">Not a shortcut around club traditions, but a more personal way to discover the people who make the game special.</p>
+          <Link href="/how-it-works" className="mt-9 inline-flex rounded-full bg-[#17392c] px-8 py-3.5 font-semibold text-white hover:bg-[#24523e]">Discover how it works</Link>
+        </div>
+      </div>
+    </section>
     <section className="border-y border-white/10 bg-[#1a4534] px-6 py-20 text-center"><p className="text-xs uppercase tracking-[0.3em] text-[#d8b35a]">Built on mutual respect</p><h2 className="mx-auto mt-5 max-w-3xl text-3xl font-semibold md:text-5xl">A shared love of golf. A respect for every club.</h2><p className="mx-auto mt-6 max-w-2xl leading-8 text-white/75">Members Time respects private club traditions and policies. We do not sell access to clubs or override their guest rules.</p><Link href="/membership" className="mt-8 inline-flex rounded-full bg-[#d8b35a] px-8 py-3 font-semibold text-[#071d16]">Discover membership</Link></section>
   </main>;
 }
