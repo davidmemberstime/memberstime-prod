@@ -33,7 +33,7 @@ export function validateMatchDecision(fixture: Pairing, decision: MatchDecision)
  if (fixture.bye) return { ok: false, reason: "Bye must be advanced by the tournament service" };
  if (decision.winnerId !== fixture.playerA && decision.winnerId !== fixture.playerB) return { ok: false, reason: "Winner is not an opponent" };
  const confirmations = new Set(decision.confirmedBy);
- if (confirmations.size !== 2 || !confirmations.has(fixture.playerA) || !confirmations.has(fixture.playerB)) {
+ if (fixture.playerB === null || confirmations.size !== 2 || !confirmations.has(fixture.playerA) || !confirmations.has(fixture.playerB)) {
   return { ok: false, reason: "Both opponents must confirm" };
  }
  return { ok: true };
