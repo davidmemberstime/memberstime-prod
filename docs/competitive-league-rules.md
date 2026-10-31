@@ -41,3 +41,13 @@ Use handicap-based singles match play; confirm the exact handicap allowance and 
 - Add a small accessible info control next to Competitive golfer, opening a modal/popover explaining: twelve ranked singles matches per season, six home and six away, flexible self-arranged opponents across UK/Ireland, handicap match play, home win 3/away win 4/home draw 1/away draw 2/loss 0, qualification for national leaderboard and finals, and +£10/month.
 - Do not preselect the paid add-on; clearly disclose the total recurring price before checkout and record the user's explicit selection. Support changing participation later, with season eligibility rules to be defined.
 - Implementation must update registration UI, server-side membership state, checkout/subscription billing, and competitive eligibility consistently; do not treat a UI-only change as complete.
+
+## Paired membership pricing clarification (approved 31 October 2026)
+- Pair base membership: £59/month total, allocated £29.50 per member.
+- Competitive singles add-on: £10/month **per competitive member only**, not per pair.
+- Neither competitive: £29.50 + £29.50 = £59/month.
+- Exactly one competitive: £39.50 (competitive) + £29.50 (social) = £69/month.
+- Both competitive: £39.50 + £39.50 = £79/month.
+- Each member chooses social or competitive independently at registration, even when billed together as a pair. Maintain distinct user profiles and individual league records; no competitive pairs format.
+- For individual memberships: £39 social or £49 competitive per month.
+- Registration and billing must show per-member allocation and combined total clearly; charge only for selected competitive members.
