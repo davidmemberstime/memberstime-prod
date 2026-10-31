@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export const metadata = {
   title: "Match Play Championships | Members Time",
-  description: "Discover the proposed Members Time Singles and Pairs Match Play Championships, open to verified golfers from eligible leading golf clubs.",
+  description: "Discover the proposed Members Time Singles and Pairs Match Play Championships, open to verified members of approved top-100 and qualifying elite golf clubs, whether or not they subscribe to Members Time.",
 };
 
 const competitions = [
@@ -33,7 +33,7 @@ export default function MatchPlay() {
         <div className="relative mx-auto max-w-6xl">
           <p className="text-xs uppercase tracking-[0.32em] text-[#e4c77d]">Members Time · The Championships</p>
           <h1 className="mt-7 max-w-4xl font-serif text-5xl leading-[1.08] md:text-7xl">Play Britain's finest courses.<br /><span className="text-[#e4c77d]">Compete for the Cups.</span></h1>
-          <p className="mt-8 max-w-2xl text-lg leading-8 text-white/75">An exclusive match-play championship for verified members of eligible leading golf clubs. Enter as a singles player or a pair, represent your club and progress from local rivalries to the national stage.</p>
+          <p className="mt-8 max-w-2xl text-lg leading-8 text-white/75">An exclusive match-play championship for verified members of approved top-100 and qualifying elite golf clubs. Enter as a singles player or a pair, represent your club and progress from local rivalries to the national stage.</p>
           <div className="mt-9 flex flex-wrap items-center gap-4"><span className="border border-[#e4c77d]/60 px-5 py-3 text-sm font-medium text-[#e4c77d]">Launching soon · Entries not yet open</span><a href="#format" className="text-sm font-semibold text-white underline decoration-[#e4c77d] underline-offset-8">Explore the format</a></div>
         </div>
       </section>
@@ -41,7 +41,7 @@ export default function MatchPlay() {
       <section className="mx-auto max-w-6xl px-6 py-20" id="competitions">
         <p className="text-xs uppercase tracking-[0.28em] text-[#967538]">Two ways to compete</p>
         <h2 className="mt-4 max-w-3xl font-serif text-4xl md:text-5xl">Singles or pairs. Your road to the national final.</h2>
-        <p className="mt-5 max-w-3xl leading-8 text-[#647468]">Open to Members Time subscribers and non-subscribers alike, provided every competitor is verified as a current member of an eligible club. A Members Time subscription gives you a reduced entry price.</p>
+        <p className="mt-5 max-w-3xl leading-8 text-[#647468]">Open to Members Time subscribers and non-subscribers alike, provided every competitor is verified as a current member of an approved top-100 or qualifying elite golf club. A Members Time subscription gives you a reduced entry price.</p>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           {competitions.map(c => <article key={c.title} className="border border-[#ded5c5] bg-white p-8 md:p-10">
             <p className="text-xs uppercase tracking-[0.2em] text-[#a17f3e]">{c.label}</p><h3 className="mt-4 font-serif text-3xl">{c.title}</h3><p className="mt-4 min-h-20 leading-7 text-[#647468]">{c.details}</p>
@@ -70,7 +70,7 @@ export default function MatchPlay() {
       </div></section>
 
       <section className="mx-auto max-w-6xl px-6 py-20"><div className="grid gap-10 md:grid-cols-2">
-        <div><p className="text-xs uppercase tracking-[0.28em] text-[#967538]">Who can enter?</p><h2 className="mt-4 font-serif text-4xl">Membership of an eligible club is the key.</h2><p className="mt-5 leading-8 text-[#647468]">You do not have to subscribe to Members Time to enter. Every golfer must hold current membership at a club on the approved championship list and pass verification. Pairs partners can belong to different eligible clubs.</p><p className="mt-4 leading-8 text-[#647468]">The proposed pairs format is four-ball better-ball match play. Each knockout tie is a single match, with the away golfer responsible for any applicable member-guest green fee at the host club. Handicaps, tie-breaks, venue allocation and deadlines will be covered by the published competition rules.</p></div>
+        <div><p className="text-xs uppercase tracking-[0.28em] text-[#967538]">Who can enter?</p><h2 className="mt-4 font-serif text-4xl">Only approved top-100 and qualifying elite clubs.</h2><p className="mt-5 leading-8 text-[#647468]">You do not have to subscribe to Members Time to enter. Every golfer must hold current membership at an approved club drawn from the top-100 and qualifying elite courses across Britain and Ireland, and pass verification. Being a member of a golf club alone does not qualify: the club must appear on the approved championship list. Club rankings and eligibility are subject to review. Pairs partners can belong to different eligible clubs.</p><p className="mt-4 leading-8 text-[#647468]">The proposed pairs format is four-ball better-ball match play. Each knockout tie is a single match, with the away golfer responsible for any applicable member-guest green fee at the host club. Handicaps, tie-breaks, venue allocation and deadlines will be covered by the published competition rules.</p></div>
         <div className="border border-[#ded5c5] bg-white p-8 md:p-10"><p className="text-xs uppercase tracking-[0.2em] text-[#a17f3e]">Registration status</p><h3 className="mt-4 font-serif text-3xl">Entries opening soon.</h3><p className="mt-4 leading-7 text-[#647468]">We're finalising club eligibility, the regional draws and competition administration. No payments or entries are being accepted yet.</p><Link href="/membership" className="mt-7 inline-flex rounded-full bg-[#173a2b] px-7 py-3 font-medium text-white transition hover:bg-[#25563f]">Explore Members Time membership</Link><p className="mt-5 text-sm text-[#647468]">Joining Members Time is optional for championship eligibility, but subscribers receive discounted entry and separate member-network benefits.</p></div>
       </div></section>
     </main>
