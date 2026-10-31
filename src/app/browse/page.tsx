@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { approvedClubImage } from "@/lib/club-images";
 
 type Tier = "Curated" | "Prestigious";
 type Mode = "recommended" | "all" | "curated";
@@ -13,9 +14,7 @@ type ClubRow = {
   region: string | null;
   country: string | null;
   tier: Tier | null;
-  guests_max: number | null;
-  clubhouse_contribution_gbp: number | null;
-  host_profiles?: { count: number }[] | null;
+  guests_max: number | null;  host_profiles?: { count: number }[] | null;
 };
 
 function formatLocation(region: string | null, country: string | null) {
@@ -106,9 +105,7 @@ export default function BrowsePage() {
           region,
           country,
           tier,
-          guests_max,
-          clubhouse_contribution_gbp,
-          host_profiles(count)
+          guests_max,          host_profiles(count)
         `
         )
         .order("name", { ascending: true });
@@ -202,13 +199,22 @@ export default function BrowsePage() {
   const firstSuggestion = suggestions[0];
 
   const filteredClubs = useMemo(() => {
-    let list = clubs;
+    // Keep a single card per club even if legacy rows contain naming variants.
+    const groups = new Map<string, ClubRow[]>();
+    for (const club of clubs) {
+      const key = normaliseClubKey(club.name) || club.name.toLowerCase();
+      groups.set(key, [...(groups.get(key) || []), club]);
+    }
+    let list = Array.from(groups.values()).map(chooseBestCandidate);
 
     if (mode === "recommended") {
       list = list.filter((c) => c.tier === "Prestigious");
     } else if (mode === "curated") {
       list = list.filter((c) => c.tier === "Curated");
     }
+
+    const search = query.trim().toLowerCase();
+    if (search) list = list.filter((c) => c.name.toLowerCase().includes(search) || (c.region || "").toLowerCase().includes(search));
 
     if (countryFilter !== "All locations") {
       const target = countryFilter.toLowerCase();
@@ -227,7 +233,7 @@ export default function BrowsePage() {
     });
 
     return list;
-  }, [clubs, mode, countryFilter]);
+  }, [clubs, mode, countryFilter, query]);
 
   const modeLabel =
     mode === "recommended"
@@ -258,8 +264,8 @@ export default function BrowsePage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf
-              clubs.
+              Discover eligible member hosts at prestigious golf
+              clubs across Britain and Ireland.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -447,16 +453,19 @@ export default function BrowsePage() {
         {loading && <p className="text-white/70">Loading clubs…</p>}
         {err && <p className="text-red-400">{err}</p>}
 
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+        {!loading && !err && filteredClubs.length === 0 && <p className="py-12 text-center text-white/70">No clubs match your filters. Try another search or select All clubs.</p>}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {filteredClubs.map((c) => {
             const location = formatLocation(c.region, c.country);
             const hostsAvailable = c.host_profiles?.[0]?.count ?? 0;
+            const clubImage = approvedClubImage(c.name);
 
             return (
               <div
                 key={c.id}
                 className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 hover:bg-white/10 transition"
               >
+                <div className="relative mb-4 aspect-[16/9] overflow-hidden rounded-xl bg-gradient-to-br from-[#416b54] via-[#234937] to-[#0b221b]">{clubImage ? <><Image src={clubImage.src} alt={clubImage.alt} fill className="object-cover" /><span className="absolute bottom-1 right-2 rounded bg-black/65 px-2 py-1 text-[10px] text-white">{clubImage.credit}</span></> : <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/65"><span className="text-3xl">⛳</span><span className="text-[11px] tracking-wide">Course photograph coming soon</span></div>}</div>
                 <div className="text-lg font-semibold">{c.name}</div>
                 <div className="mt-1 text-sm text-white/70">{location}</div>
 
@@ -464,11 +473,6 @@ export default function BrowsePage() {
                   <div className="text-white/80">
                     👤 <span className="font-semibold">{hostsAvailable}</span>{" "}
                     hosts available
-                  </div>
-
-                  <div className="text-white/80">
-                    <div className="text-white/60 text-xs">Contribution</div>
-                    <div className="font-semibold">£20</div>
                   </div>
                 </div>
 
