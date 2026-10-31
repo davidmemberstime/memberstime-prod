@@ -459,7 +459,7 @@ export default function BrowsePage() {
                 key={c.id}
                 className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 hover:bg-white/10 transition"
               >
-                <div className="relative mb-4 aspect-[16/10] overflow-hidden rounded-xl bg-gradient-to-br from-[#416b54] via-[#234937] to-[#0b221b]">{clubImage ? <><Image src={clubImage.src} alt={clubImage.alt} fill className="object-cover" /><span className="absolute bottom-1 right-2 rounded bg-black/65 px-2 py-1 text-[10px] text-white">{clubImage.credit}</span></> : <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/65"><span className="text-3xl">⛳</span><span className="text-[11px] tracking-wide">Course photograph coming soon</span></div>}</div>
+                <div className="relative mb-4 aspect-[16/9] overflow-hidden rounded-xl bg-gradient-to-br from-[#416b54] via-[#234937] to-[#0b221b]">{clubImage ? <><Image src={clubImage.src} alt={clubImage.alt} fill className="object-cover" /><span className="absolute bottom-1 right-2 rounded bg-black/65 px-2 py-1 text-[10px] text-white">{clubImage.credit}</span></> : <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/65"><span className="text-3xl">⛳</span><span className="text-[11px] tracking-wide">Course photograph coming soon</span></div>}</div>
                 <div className="text-lg font-semibold">{c.name}</div>
                 <div className="mt-1 text-sm text-white/70">{location}</div>
 
