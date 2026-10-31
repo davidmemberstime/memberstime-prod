@@ -59,7 +59,7 @@ export default function MemberDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto p-10">
-      <h1 className="text-3xl font-bold mb-8">Booking Requests</h1>
+      <h1 className="text-3xl font-bold mb-4">Booking Requests</h1>\n      <a href="/profile-settings" className="inline-block mb-8 rounded-lg bg-[#d8b35a] px-4 py-2 font-semibold text-[#041b14]">Edit profile photo &amp; tee times</a>
 
       {requests.length === 0 && (
         <p>No booking requests yet.</p>
