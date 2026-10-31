@@ -6,11 +6,11 @@ export const metadata = {
 };
 
 const competitions = [
-  { title: "Singles Championship", label: "One golfer. One national title.", member: "£39", guest: "£69", note: "Per player", details: "Compete individually in home-and-away match play against golfers from other eligible clubs." },
+  { title: "Singles Championship", label: "One golfer. One national title.", member: "£39", guest: "£69", note: "Per player", details: "Compete individually in single-leg knockout match play against golfers from other eligible clubs." },
   { title: "Pairs Championship", label: "Two golfers. One team.", member: "£69", guest: "£119", note: "Per pair", details: "Four-ball better-ball match play. Partners may belong to different eligible clubs and do not need a linked subscription." },
 ];
 const stages = [
-  { n: "01", title: "Local regional qualifiers", detail: "Begin in a geographically grouped knockout bracket, aiming for manageable local journeys and home-and-away legs." },
+  { n: "01", title: "Local regional qualifiers", detail: "Begin in a geographically grouped knockout bracket, aiming for manageable local journeys. Each tie is one match at one competitor's home club." },
   { n: "02", title: "Super-regional championships", detail: "Regional champions enter the Gold pathway; regional runners-up enter Silver. Meet golfers from further afield and experience new courses." },
   { n: "03", title: "National championships", detail: "Successful super-regional qualifiers progress to the national Gold Cup or Silver Plate, with separate singles and pairs titles." },
 ];
@@ -50,7 +50,7 @@ export default function MatchPlay() {
             {c.title.startsWith("Pairs") && <p className="mt-2 text-sm text-[#647468]">Mixed pair (one subscriber): £94 per team</p>}
           </article>)}
         </div>
-        <p className="mt-5 text-sm leading-6 text-[#647468]">Proposed launch prices, subject to confirmation. Entry does not include a Members Time subscription, guest green fees, travel or accommodation. Course access remains subject to club permission and availability.</p>
+        <p className="mt-5 text-sm leading-6 text-[#647468]">Proposed launch prices, subject to confirmation. Entry does not include a Members Time subscription, guest green fees, travel or accommodation. The away golfer pays any applicable member-guest green fee. Course access and rates remain subject to club permission and availability.</p>
       </section>
 
       <section id="format" className="bg-[#ece7dc] px-6 py-20"><div className="mx-auto max-w-6xl">
@@ -70,7 +70,7 @@ export default function MatchPlay() {
       </div></section>
 
       <section className="mx-auto max-w-6xl px-6 py-20"><div className="grid gap-10 md:grid-cols-2">
-        <div><p className="text-xs uppercase tracking-[0.28em] text-[#967538]">Who can enter?</p><h2 className="mt-4 font-serif text-4xl">Membership of an eligible club is the key.</h2><p className="mt-5 leading-8 text-[#647468]">You do not have to subscribe to Members Time to enter. Every golfer must hold current membership at a club on the approved championship list and pass verification. Pairs partners can belong to different eligible clubs.</p><p className="mt-4 leading-8 text-[#647468]">The proposed pairs format is four-ball better-ball match play. Home-and-away legs, handicaps, tie-breaks, guest arrangements and deadlines will be covered by the published competition rules.</p></div>
+        <div><p className="text-xs uppercase tracking-[0.28em] text-[#967538]">Who can enter?</p><h2 className="mt-4 font-serif text-4xl">Membership of an eligible club is the key.</h2><p className="mt-5 leading-8 text-[#647468]">You do not have to subscribe to Members Time to enter. Every golfer must hold current membership at a club on the approved championship list and pass verification. Pairs partners can belong to different eligible clubs.</p><p className="mt-4 leading-8 text-[#647468]">The proposed pairs format is four-ball better-ball match play. Each knockout tie is a single match, with the away golfer responsible for any applicable member-guest green fee at the host club. Handicaps, tie-breaks, venue allocation and deadlines will be covered by the published competition rules.</p></div>
         <div className="border border-[#ded5c5] bg-white p-8 md:p-10"><p className="text-xs uppercase tracking-[0.2em] text-[#a17f3e]">Registration status</p><h3 className="mt-4 font-serif text-3xl">Entries opening soon.</h3><p className="mt-4 leading-7 text-[#647468]">We're finalising club eligibility, the regional draws and competition administration. No payments or entries are being accepted yet.</p><Link href="/membership" className="mt-7 inline-flex rounded-full bg-[#173a2b] px-7 py-3 font-medium text-white transition hover:bg-[#25563f]">Explore Members Time membership</Link><p className="mt-5 text-sm text-[#647468]">Joining Members Time is optional for championship eligibility, but subscribers receive discounted entry and separate member-network benefits.</p></div>
       </div></section>
     </main>
