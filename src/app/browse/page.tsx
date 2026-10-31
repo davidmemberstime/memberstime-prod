@@ -14,9 +14,7 @@ type ClubRow = {
   region: string | null;
   country: string | null;
   tier: Tier | null;
-  guests_max: number | null;
-  clubhouse_contribution_gbp: number | null;
-  host_profiles?: { count: number }[] | null;
+  guests_max: number | null;  host_profiles?: { count: number }[] | null;
 };
 
 function formatLocation(region: string | null, country: string | null) {
@@ -107,9 +105,7 @@ export default function BrowsePage() {
           region,
           country,
           tier,
-          guests_max,
-          clubhouse_contribution_gbp,
-          host_profiles(count)
+          guests_max,          host_profiles(count)
         `
         )
         .order("name", { ascending: true });
@@ -477,11 +473,6 @@ export default function BrowsePage() {
                   <div className="text-white/80">
                     👤 <span className="font-semibold">{hostsAvailable}</span>{" "}
                     hosts available
-                  </div>
-
-                  <div className="text-white/80">
-                    <div className="text-white/60 text-xs">Contribution</div>
-                    <div className="font-semibold">£20</div>
                   </div>
                 </div>
 
