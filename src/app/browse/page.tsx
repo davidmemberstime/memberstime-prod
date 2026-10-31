@@ -203,13 +203,22 @@ export default function BrowsePage() {
   const firstSuggestion = suggestions[0];
 
   const filteredClubs = useMemo(() => {
-    let list = clubs;
+    // Keep a single card per club even if legacy rows contain naming variants.
+    const groups = new Map<string, ClubRow[]>();
+    for (const club of clubs) {
+      const key = normaliseClubKey(club.name) || club.name.toLowerCase();
+      groups.set(key, [...(groups.get(key) || []), club]);
+    }
+    let list = Array.from(groups.values()).map(chooseBestCandidate);
 
     if (mode === "recommended") {
       list = list.filter((c) => c.tier === "Prestigious");
     } else if (mode === "curated") {
       list = list.filter((c) => c.tier === "Curated");
     }
+
+    const search = query.trim().toLowerCase();
+    if (search) list = list.filter((c) => c.name.toLowerCase().includes(search) || (c.region || "").toLowerCase().includes(search));
 
     if (countryFilter !== "All locations") {
       const target = countryFilter.toLowerCase();
@@ -228,7 +237,7 @@ export default function BrowsePage() {
     });
 
     return list;
-  }, [clubs, mode, countryFilter]);
+  }, [clubs, mode, countryFilter, query]);
 
   const modeLabel =
     mode === "recommended"
@@ -259,8 +268,8 @@ export default function BrowsePage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm md:text-base text-white/70">
-              A curated UK list of verified member hosts at prestigious golf
-              clubs.
+              Discover eligible member hosts at prestigious golf
+              clubs across Britain and Ireland.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -448,7 +457,8 @@ export default function BrowsePage() {
         {loading && <p className="text-white/70">Loading clubs…</p>}
         {err && <p className="text-red-400">{err}</p>}
 
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+        {!loading && !err && filteredClubs.length === 0 && <p className="py-12 text-center text-white/70">No clubs match your filters. Try another search or select All clubs.</p>}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {filteredClubs.map((c) => {
             const location = formatLocation(c.region, c.country);
             const hostsAvailable = c.host_profiles?.[0]?.count ?? 0;
