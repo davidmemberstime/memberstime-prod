@@ -2,10 +2,10 @@
 
 ## Proposed programme
 - Each approved member receives a personal invitation link or code.
-- Referrer receives **2 bonus away-round credits** after the invited golfer is independently verified, approved and makes their first successful paid membership payment.
-- Maximum **6 rewarded referrals / 12 bonus credits per rolling 12 months** per referring account.
+- Referrer receives **1.5 bonus away-round credits** after the invited golfer is independently verified, approved and makes their first successful paid membership payment.
+- Maximum **6 rewarded referrals / 9 bonus credits per rolling 12 months** per referring account.
 - Each awarded referral credit expires **12 months from award**; it is distinct from hosting credits (currently proposed three-month expiry).
-- Credits cannot be sold, transferred, redeemed for cash, or used to bypass a host's approval, guest fees, club rules or playing availability.
+- A temporary promotional rate of 2 credits may be offered later, but is not the default reward.\n- Credits cannot be sold, transferred, redeemed for cash, or used to bypass a host's approval, guest fees, club rules or playing availability.
 - An invitation is not a friendship connection; recipients must separately consent to any friend request.
 - A member who adds a paid playing partner can qualify for the same referral reward, but only once per newly paid account; joining as a pair does not create two rewards automatically.
 - Reward not issued during free founding months; award only after a qualifying paid subscription starts.
