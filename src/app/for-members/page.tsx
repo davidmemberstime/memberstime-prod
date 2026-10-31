@@ -219,8 +219,7 @@ export default function ForMembersPage() {
           Club Member Registration
         </h1>
         <p className="mt-3 text-white/70">
-          Members join free. Hosting is optional. We verify membership, standards
-          and suitability to protect clubs.
+          We verify membership and eligibility to protect participating clubs. All member-to-member communication takes place through Members Time.
         </p>
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
@@ -241,7 +240,7 @@ export default function ForMembersPage() {
                 />
               </Field>
 
-              <Field label="Telephone">
+              <Field label="Telephone (private — never shown to other members)">
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -252,7 +251,7 @@ export default function ForMembersPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Email *">
+              <Field label="Email * (private account notifications only)">
                 <input
                   type="email"
                   value={email}
@@ -384,13 +383,13 @@ export default function ForMembersPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="min-h-[110px] w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-white/30"
-                placeholder="Availability, preferred contact method, anything you want us to know."
+                placeholder="Availability and hosting preferences. Please do not include contact details."
               />
             </Field>
 
             <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
               By applying, you confirm you will host only in line with your
-              club’s rules and you accept responsibility for guest conduct.
+              club’s rules and you accept responsibility for guest conduct. Contact details are private; booking arrangements must stay within Members Time.
             </div>
 
             <button
