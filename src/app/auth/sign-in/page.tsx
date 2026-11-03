@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -14,7 +14,6 @@ export default function SignInPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +53,16 @@ export default function SignInPage() {
     }
     router.replace("/exchange");
   }
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({data}) => {
+      if (mounted && data.session?.user?.id) {
+        void routeAfterLogin(data.session.user.id);
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -161,15 +170,7 @@ export default function SignInPage() {
             </label>
 
             <div className="flex items-center justify-between gap-4">
-              <label className="flex items-center gap-2 text-sm text-white/70">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-white/20 bg-black/20"
-                />
-                Remember me
-              </label>
+              <span className="text-xs text-white/60">Your login stays saved on this website unless you sign out or your browser clears its data.</span>
 
               <button
                 type="button"
