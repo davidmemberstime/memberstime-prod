@@ -22,28 +22,37 @@ export default function SignInPage() {
   const [resetLoading, setResetLoading] = useState(false);
 
   async function routeAfterLogin(userId: string) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("verification_status,onboarding_complete")
-      .eq("id", userId)
-      .single();
+    const { data: application, error: applicationError } = await supabase
+      .from("membership_applications")
+      .select("status")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-    if (!profile) {
+    if (applicationError) {
+      setError("Unable to check your membership. Please try again.");
+      return;
+    }
+    if (!application) {
       router.replace("/apply");
       return;
     }
-
-    if (!profile.onboarding_complete) {
-      router.replace("/apply");
+    if (application.status === "approved") {
+      const { data: entitlement, error: entitlementError } = await supabase
+        .from("membership_entitlements")
+        .select("membership_status,subscription_status,access_expires_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (entitlementError) {
+        setError("Unable to check your membership access. Please try again.");
+        return;
+      }
+      const active = entitlement?.membership_status === "active"
+        && ["active", "trialing"].includes(entitlement.subscription_status)
+        && (!entitlement.access_expires_at || new Date(entitlement.access_expires_at).getTime() > Date.now());
+      router.replace(active ? "/exchange/dashboard" : "/exchange");
       return;
     }
-
-    if (profile.verification_status === "verified") {
-      router.replace("/apply");
-      return;
-    }
-
-    router.replace("/apply");
+    router.replace("/exchange");
   }
 
   async function onSubmit(e: React.FormEvent) {
